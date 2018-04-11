@@ -9,6 +9,6 @@
     "preview-py3": "python3 -m http.server"
   },
   "dependencies": {
-    "mapshaper": "^0.4.63"
+    "mapshaper": "^0.4.64"
   }
 }
