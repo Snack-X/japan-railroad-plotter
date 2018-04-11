@@ -2,7 +2,7 @@
 
 ## Data
 
-Source data and converted data are quite huge and not included on this repository. You should download source data by yourself and place them under `data_raw` directory.
+Source data is quite huge and not included on this repository. You should download source data by yourself and place them under `data_raw` directory.
 
 * http://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N05-v1_3.html
 
