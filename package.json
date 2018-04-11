@@ -1,0 +1,14 @@
+{
+  "name": "japan-railroad-plotter",
+  "version": "0.0.1",
+  "description": "Japan Railroad Plotter",
+  "author": "Snack <korsnack@korsnack.kr>",
+  "license": "MIT",
+  "scripts": {
+    "preview-py2": "python -m SimpleHTTPServer",
+    "preview-py3": "python3 -m http.server"
+  },
+  "dependencies": {
+    "mapshaper": "^0.4.63"
+  }
+}
