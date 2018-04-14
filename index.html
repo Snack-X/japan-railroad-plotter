@@ -1,0 +1,61 @@
+<!DOCTYPE html><html>
+<head>
+<meta charset="UTF-8">
+<title>Japan Railroad Plotter</title>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+
+<div class="loading">
+  <div class="loading-indicator">Loading...</div>
+</div>
+<div id="google-map"></div>
+
+<div class="hover hover-left hover-top hover-plots">
+  <ul class="item-list plot-list">
+  </ul>
+</div>
+
+<div class="hover hover-right hover-top hover-search">
+  <div class="search-input">
+    <input type="text" placeholder="Search">
+  </div>
+  <table class="search-state" style="display: none">
+    <tr>
+      <td colspan="3" class="state-current"></td>
+    </tr>
+    <tr>
+      <td class="state-start"></td>
+      <td class="state-arrow">→</td>
+      <td class="state-end"></td>
+    </tr>
+    <tr>
+      <td colspan="3" class="state-controls">
+        <button class="state-cancel">Cancel</button>
+      </td>
+    </tr>
+  </table>
+  <ul class="item-list search-result">
+  </ul>
+</div>
+
+<div class="hover hover-left hover-bottom hover-watermark">
+  <a href="https://github.com/Snack-X/japan-railroad-plotter">Japan Railroad Plotter</a>
+  <!-- &middot; -->
+  <!-- <a href="#">Help</a> -->
+</div>
+
+<script src="https://maps.googleapis.com/maps/api/js"></script>
+<script src="lz-string-1.4.4.min.js"></script>
+<script src="topojson-3.0.2.min.js"></script>
+<script src="app.js"></script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-111007731-2"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-111007731-2');
+</script>
+
+
+</body></html>
