@@ -107,6 +107,12 @@ button:active {
   overflow-y: auto;
 }
 
+.plots-controls {
+  padding: 1rem 0;
+  border-bottom: 1px solid #fff;
+  text-align: center;
+}
+
 .plot-item {
   margin: .5rem 0;
 }

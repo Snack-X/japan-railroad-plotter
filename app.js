@@ -6,7 +6,7 @@ window.$$ = document.querySelectorAll.bind(document);
   p.prototype.$$ = p.prototype.querySelectorAll;
 });
 
-HTMLElement.prototype.$show = function() { this.style.display = "block"; };
+HTMLElement.prototype.$show = function(v = "block") { this.style.display = v; };
 HTMLElement.prototype.$hide = function() { this.style.display = "none"; };
 
 window._make = (name, attrs = {}) => {
@@ -31,6 +31,10 @@ function JRP_ResetState() {
   JRP_UnsetStateLine();
   JRP_UnsetStateStartStation();
   JRP_UnsetStateEndStation();
+}
+
+function JRP_ResetTemporary() {
+
 }
 
 function searchLine(keyword) {
@@ -202,6 +206,9 @@ function loadGoogleMaps() {
 function bindEvents() {
   $(".search-input input").addEventListener("input", onSearchInput);
   $(".state-cancel").addEventListener("click", resetSearch);
+
+  $(".import-jrp").addEventListener("click", importPlotsFromBase64);
+  $(".export-jrp").addEventListener("click", exportPlotsAsBase64);
 }
 
 //==============================================================================
@@ -281,7 +288,7 @@ function onSearchItemLineClick(event) {
 
   JRP_SetStateLine(lineName, company);
 
-  $(".search-state").$show();
+  $(".search-state").$show("table");
   $(".state-current").textContent = lineName;
 
   $(".search-input input").removeEventListener("input", onSearchInput);
@@ -339,7 +346,7 @@ function onSearchItemStationClick(event) {
     JRP_SetStateEndStation(key);
     $(".state-end").textContent = this.$(".name-primary").textContent;
 
-    addPlotItem();
+    addPlotItem(JRP.state.lineFeatures, JRP.state.startFeature, JRP.state.endFeature);
     resetSearch();
   }
 }
@@ -390,15 +397,20 @@ function _makePlotItem(primary, secondary) {
   return _li;
 }
 
-function addPlotItem() {
-  const lines = JRP.state.lineFeatures;
-  const start = JRP.state.startFeature;
-  const end = JRP.state.endFeature;
+function addPlotItem(lines, start, end) {
   const route = findRoute(lines, start, end);
 
   const plotIndex = JRP.plots.length;
   const plot = {
     coordinates: route,
+    properties: {
+      lineName: lines[0].properties.lineName,
+      company: lines[0].properties.company,
+      start: start.properties.groupId,
+      end: end.properties.groupId,
+      color: "#000000",
+      width: 1,
+    },
     object: new google.maps.Polyline({
       path: route.map(([ lng, lat ]) => ({ lat, lng })),
       strokeColor: "#000000",
@@ -408,9 +420,9 @@ function addPlotItem() {
   };
   JRP.plots.push(plot);
 
-  const _li = _makePlotItem(JRP.state.lineName,
-    JRP.state.startFeature.properties.stationName + " → " +
-    JRP.state.endFeature.properties.stationName);
+  const _li = _makePlotItem(lines[0].properties.lineName,
+    start.properties.stationName + " → " +
+    end.properties.stationName);
 
   _li.setAttribute("data-index", plotIndex);
   _li.$(".action-delete").addEventListener("click", deletePlotItem);
@@ -418,6 +430,16 @@ function addPlotItem() {
   _li.$(".action-width").addEventListener("click", changePlotWidth);
 
   $(".plot-list").appendChild(_li);
+
+  return plotIndex;
+}
+
+function searchAndAddPlotItem(lineName, company, start, end) {
+  const lineFeatures = getRailroadFeatures(lineName, company);
+  const startFeature = getStationFeature(start);
+  const endFeature = getStationFeature(end);
+
+  return addPlotItem(lineFeatures, startFeature, endFeature);
 }
 
 function deletePlotItem(event) {
@@ -429,30 +451,61 @@ function deletePlotItem(event) {
 
   for(let i = index + 1 ; i < JRP.plots.length ; i++) {
     log("index", i);
-    $(".plot-item[data-index='" + i + "'").setAttribute("data-index", i - 1);
+    $(".plot-item[data-index='" + i + "']").setAttribute("data-index", i - 1);
   }
 
   JRP.plots[index].object.setMap(null);
   JRP.plots.splice(index, 1);
 }
 
-function changePlotColor(event) {
-  const index = parseInt(this.parentNode.parentNode.getAttribute("data-index"));
+function changePlotColor(index, newColor) {
+  if(typeof index !== "number") index = parseInt(this.parentNode.parentNode.getAttribute("data-index"));
+  if(typeof newColor !== "string") newColor = prompt("새로운 색상 (#xxxxxx 형태)").trim();
 
-  const newColor = prompt("새로운 색상 (#xxxxxx 형태)").trim();
   if(newColor && /^#[0-9a-f]{6}$/i.test(newColor)) {
     JRP.plots[index].object.set("strokeColor", newColor);
-    this.$("var").textContent = newColor;
+    JRP.plots[index].properties.color = newColor;
+    $(".plot-item[data-index='" + index + "'] .action-color var").textContent = newColor;
   }
 }
 
-function changePlotWidth(event) {
-  const index = parseInt(this.parentNode.parentNode.getAttribute("data-index"));
+function changePlotWidth(index, newWidth) {
+  if(typeof index !== "number") index = parseInt(this.parentNode.parentNode.getAttribute("data-index"));
+  if(typeof newWidth !== "number") newWidth = parseFloat(prompt("새로운 너비 (숫자)").trim());
 
-  const newWidth = prompt("새로운 너비 (숫자)").trim();
-  if(newWidth && !Number.isNaN(parseFloat(newWidth))) {
-    JRP.plots[index].object.set("strokeWeight", parseFloat(newWidth));
-    this.$("var").textContent = newWidth;
+  if(newWidth && !Number.isNaN(newWidth)) {
+    JRP.plots[index].object.set("strokeWeight", newWidth);
+    JRP.plots[index].properties.width = newWidth;
+    $(".plot-item[data-index='" + index + "'] .action-width var").textContent = newWidth;
+  }
+}
+
+function exportPlotsAsBase64() {
+  const plots = JSON.stringify(JRP.plots.map(p => p.properties));
+  const output = LZString.compressToBase64(plots);
+  prompt("Ctrl+C를 눌러 복사하세요", output);
+}
+
+function importPlotsFromBase64() {
+  const input = prompt("불러올 데이터를 입력하세요");
+  if(input === null) return;
+
+  const plots = LZString.decompressFromBase64(input);
+  if(plots === null) alert("올바르지 않은 데이터입니다.");
+
+  try {
+    const parsed = JSON.parse(plots);
+
+    for(const plot of parsed) {
+      const index = searchAndAddPlotItem(plot.lineName, plot.company, plot.start, plot.end);
+      changePlotColor(index, plot.color);
+      changePlotWidth(index, plot.width);
+    }
+  }
+  catch(e) {
+    alert("올바르지 않은 데이터입니다.");
+    log(e);
+    log(plots);
   }
 }
 
@@ -495,6 +548,7 @@ function findRoute(lines, start, end) {
         alert("Unable to find a route");
         resetSearch();
       }
+      return route;
     }
   }
 }

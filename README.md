@@ -1,4 +1,6 @@
-# Japan Railroad Plotter
+# [Japan Railroad Plotter](https://jrp.snack.studio)
+
+Go to [https://jrp.snack.studio](https://jrp.snack.studio).
 
 ## Data
 
