@@ -143,8 +143,10 @@ function JRP_UnsetStateEndStation() {
 //==============================================================================
 
 async function loadData() {
+  const time = Math.ceil(new Date().getTime() / 3600000);
+
   const revisionDefault = { railroad: 0, station: 0 };
-  const revisionRemote = await (await fetch("data/revision.json")).json();
+  const revisionRemote = await (await fetch("data/revision.json?t=" + time)).json();
   const revisionLocal = JSON.parse(localStorage.getItem("revision")) || revisionDefault;
 
   const cachedRailroad = localStorage.getItem("railroad");
@@ -152,7 +154,7 @@ async function loadData() {
 
   if(revisionLocal.railroad < revisionRemote.railroad || !cachedRailroad) {
     log("railroad cache is outdated, downloading");
-    const dataRailroad = await (await fetch("data/japan-railway-railroad.json")).text();
+    const dataRailroad = await (await fetch("data/japan-railway-railroad.json?r=" + revisionRemote.railroad )).text();
     JRP.railroad = JSON.parse(dataRailroad);
 
     log("saving railroad cache, compressing");
@@ -167,7 +169,7 @@ async function loadData() {
 
   if(revisionLocal.station < revisionRemote.station || !cachedStation) {
     log("station cache is outdated, downloading");
-    const dataStation = await (await fetch("data/japan-railway-station.json")).text();
+    const dataStation = await (await fetch("data/japan-railway-station.json?r=" + revisionRemote.railroad)).text();
     JRP.station = JSON.parse(dataStation);
 
     log("saving station cache, compressing");
