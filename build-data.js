@@ -30,7 +30,9 @@ const runMapshaper = commands => new Promise((resolve, reject) => {
     -each 'type = parseInt(type),
            openYear = parseInt(openYear),
            startYear = parseInt(startYear),
-           endYear = parseInt(endYear)' \
+           endYear = parseInt(endYear)
+           groupId = (this.id == 6053) ? "EB03_a14208001" :
+                     (this.id == 6055) ? "EB03_a14208003" : groupId' \
     -filter 'endYear == 9999' \
     -rename-layers stations \
     -o data/japan-railway-station.json format=topojson precision=0.00001`);

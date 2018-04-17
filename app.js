@@ -38,9 +38,10 @@ function JRP_ResetTemporary() {
 }
 
 function searchLine(keyword) {
-  const filtered = JRP.railroads.features.filter(
-    f => f.properties.lineName.includes(keyword)
-  );
+  const filtered = JRP.railroads.features.filter(f => (
+    f.properties.lineName.includes(keyword) ||
+    f.properties.company.includes(keyword)
+  ));
 
   const result = [];
   const keys = {};
@@ -147,10 +148,8 @@ function JRP_UnsetStateEndStation() {
 //==============================================================================
 
 async function loadData() {
-  const time = Math.ceil(new Date().getTime() / 3600000);
-
   const revisionDefault = { railroad: 0, station: 0 };
-  const revisionRemote = await (await fetch("data/revision.json?t=" + time)).json();
+  const revisionRemote = await (await fetch("data/revision.json?v=1.1.0")).json();
   const revisionLocal = JSON.parse(localStorage.getItem("revision")) || revisionDefault;
 
   const cachedRailroad = localStorage.getItem("railroad");
@@ -207,7 +206,13 @@ function bindEvents() {
   $(".search-input input").addEventListener("input", onSearchInput);
   $(".state-cancel").addEventListener("click", resetSearch);
 
-  $(".import-jrp").addEventListener("click", importPlotsFromBase64);
+  $$(".modal .modal-close").forEach($el => $el.addEventListener("click", function() {
+    this.parentNode.parentNode.$hide();
+  }));
+
+  $(".import-jrp").addEventListener("click", showImportJrpModal);
+  $(".modal-action-import-jrp").addEventListener("click", importPlotsFromBase64);
+
   $(".export-jrp").addEventListener("click", exportPlotsAsBase64);
 }
 
@@ -483,12 +488,21 @@ function changePlotWidth(index, newWidth) {
 function exportPlotsAsBase64() {
   const plots = JSON.stringify(JRP.plots.map(p => p.properties));
   const output = LZString.compressToBase64(plots);
-  prompt("Ctrl+C를 눌러 복사하세요", output);
+
+  $(".modal-export-jrp").$show();
+  $(".modal-export-jrp textarea").value = output;
+  $(".modal-export-jrp textarea").select();
+}
+
+function showImportJrpModal() {
+  $(".modal-import-jrp").$show();
+  $(".modal-import-jrp textarea").value = "";
+  $(".modal-import-jrp textarea").focus();
 }
 
 function importPlotsFromBase64() {
-  const input = prompt("불러올 데이터를 입력하세요");
-  if(input === null) return;
+  const input = $(".modal-import-jrp textarea").value.trim();
+  if(input === "") return;
 
   const plots = LZString.decompressFromBase64(input);
   if(plots === null) alert("올바르지 않은 데이터입니다.");
@@ -524,33 +538,12 @@ function findRoute(lines, start, end) {
   log("start", start.properties.stationName);
   log("end", end.properties.stationName);
 
-  // 두 역이 같은 선상에 있으면 빠르게 연결
-  for(const line of lines) {
-    let startIdx = -1, endIdx = -1;
-
-    for(let i = 0 ; i < line.geometry.coordinates.length ; i++) {
-      const coord = line.geometry.coordinates[i];
-      if(compareCoordinate(coord, start.geometry.coordinates)) startIdx = i;
-      else if(compareCoordinate(coord, end.geometry.coordinates)) endIdx = i;
-    }
-
-    if(startIdx !== -1 && endIdx !== -1) {
-      log(start.properties);
-
-      if(startIdx < endIdx)
-        return line.geometry.coordinates.slice(startIdx, endIdx + 1);
-      else
-        return line.geometry.coordinates.slice(endIdx, startIdx + 1).reverse();
-    }
-    else {
-      const route = findRouteInHardWay(lines, start, end);
-      if(route === false) {
-        alert("Unable to find a route");
-        resetSearch();
-      }
-      return route;
-    }
+  const route = findRouteInHardWay(lines, start, end);
+  if(route === false) {
+    alert("Unable to find a route");
+    resetSearch();
   }
+  return route;
 }
 
 function findRouteInHardWay(lineFeatures, startFeature, endFeature) {
@@ -588,10 +581,10 @@ function findRouteInHardWay(lineFeatures, startFeature, endFeature) {
   // 어떤 선이 어떤 선과 어디서 연결되는지 계산
   for(let lineIndex = 0 ; lineIndex < lines.length ; lineIndex++) {
     for(let ei = 0 ; ei < endpoints.length ; ei++) {
-      if(endpoints[ei][0] === lineIndex) continue;
-
       const toFind = [ endpoints[ei][1][1], endpoints[ei][1][2] ];
-      const intersection = lines[lineIndex].filter(([p, x, y]) => compareCoordinate([x, y], toFind))[0];
+      const intersection = lines[lineIndex].filter(
+        ([p, x, y]) => endpoints[ei][1][0] !== p && compareCoordinate([x, y], toFind)
+      )[0];
       if(intersection) {
         log(`${lineIndex}[${intersection[0]}] - ${endpoints[ei][0]}[${endpoints[ei][1][0]}]`);
 
@@ -627,7 +620,7 @@ function findRouteInHardWay(lineFeatures, startFeature, endFeature) {
   log("start end", start, end);
 
   // 시작점에서부터 양쪽으로 찾아나가기
-  const routes = findRoutesRecursive(lines, intersections, start, end, DIR_START);
+  const routes = findRoutesRecursive(lines, intersections, start, end, DIR_START, []);
   if(routes.length === 0) return false;
 
   const candidates = routes.map(
@@ -653,17 +646,22 @@ function findRouteInHardWay(lineFeatures, startFeature, endFeature) {
   return candidatesWithLength[0][0];
 }
 
-function findRoutesRecursive(lines, intersections, start, end, prevDirection) {
+function findRoutesRecursive(lines, intersections, start, end, prevDirection, visited = []) {
   log("----------------------------------------------------------");
+
+  const routes = [];
+
+  // 같은 선 안에 있고 시작점과 종료점이 있는 경우
   if(start[0] === end[0]) {
-    log("found");
-    return [ [ [start[0], start[1], end[1]] ] ];
+    log("found direct");
+    routes.push([ [start[0], start[1], end[1]] ]);
   }
+
+  const newVisited = visited.slice();
+  newVisited.push(`${start[0]}/${start[1]}`);
 
   let points = Object.keys(intersections[start[0]]).map(i => parseInt(i));
   points.sort((a, b) => a - b);
-
-  const routes = [];
 
   let idx;
   for(idx = 0 ; idx < points.length ; idx++)
@@ -679,12 +677,12 @@ function findRoutesRecursive(lines, intersections, start, end, prevDirection) {
     log("intersection", start[0], start[1]);
     const next = intersections[start[0]][start[1]];
 
-    if(next === null) {
+    if(next === null || newVisited.includes(`${next[0]}/${next[1]}`)) {
       log("intersection dead end");
     }
     else {
       log("find route for", next, end);
-      const nextRoutes = findRoutesRecursive(lines, intersections, next, end, DIR_INTERSECTION);
+      const nextRoutes = findRoutesRecursive(lines, intersections, next, end, DIR_INTERSECTION, newVisited);
       log("intersection routes", nextRoutes);
 
       for(let i = 0 ; i < nextRoutes.length ; i++)
@@ -706,7 +704,7 @@ function findRoutesRecursive(lines, intersections, start, end, prevDirection) {
       log("left", next);
 
       log("find route for", next, end);
-      const nextRoutes = findRoutesRecursive(lines, intersections, next, end, DIR_LEFT);
+      const nextRoutes = findRoutesRecursive(lines, intersections, next, end, DIR_LEFT, newVisited);
       log("left routes", nextRoutes);
 
       for(let i = 0 ; i < nextRoutes.length ; i++)
@@ -726,7 +724,7 @@ function findRoutesRecursive(lines, intersections, start, end, prevDirection) {
       log("right", next);
 
       log("find route for", next, end);
-      const nextRoutes = findRoutesRecursive(lines, intersections, next, end, DIR_RIGHT);
+      const nextRoutes = findRoutesRecursive(lines, intersections, next, end, DIR_RIGHT, newVisited);
       log("right routes", nextRoutes);
 
       for(let i = 0 ; i < nextRoutes.length ; i++)
