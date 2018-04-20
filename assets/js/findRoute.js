@@ -1,3 +1,4 @@
+const { calculateLength, distance } = require("./geoUtilities");
 const DIR_LEFT = -1,
       DIR_START = 0,
       DIR_RIGHT = 1,

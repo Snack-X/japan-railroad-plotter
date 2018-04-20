@@ -4,7 +4,6 @@ const LZString = require("lz-string");
 const { VERSION_RAILROAD, VERSION_STATION } = require("./dataRevision");
 
 require("./domUtilities");
-const { calculateLength, distance } = require("./geoUtilities");
 const findRoute = require("./findRoute");
 
 window.JRP = {
@@ -380,13 +379,13 @@ function _makePlotItem(primary, secondary) {
   _secondary.textContent = secondary;
 
   const _actionDelete = _make("button", { class: "action-delete" });
-  _actionDelete.textContent = "Delete";
+  _actionDelete.textContent = "삭제";
 
   const _actionColor = _make("button", { class: "action-color" });
-  _actionColor.innerHTML = "Color (<var>#000000</var>)";
+  _actionColor.innerHTML = "색 (<var>#000000</var>)";
 
   const _actionWidth = _make("button", { class: "action-width" });
-  _actionWidth.innerHTML = "Width (<var>1</var>)";
+  _actionWidth.innerHTML = "두께 (<var>1</var>)";
 
   const _controls = _make("div", { class: "plot-controls" });
   _controls.appendChild(_actionDelete);
