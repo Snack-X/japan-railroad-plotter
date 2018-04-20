@@ -2,11 +2,11 @@ const path = require("path");
 
 module.exports = {
   entry: {
-    app: "./assets/app.js",
+    app: "./assets/js/app.js",
   },
   output: {
     path: path.resolve(__dirname, "assets"),
-    filename: "[name].pack.js",
+    filename: "[name].js",
   },
   module: {
     rules: [{

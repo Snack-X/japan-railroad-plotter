@@ -1,6 +1,6 @@
 {
   "name": "japan-railroad-plotter",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Japan Railroad Plotter",
   "author": "Snack <korsnack@korsnack.kr>",
   "license": "MIT",
@@ -10,8 +10,8 @@
     "build": "npm run build-js && npm run build-css",
     "build-js": "webpack --mode production",
     "build-js:dev": "webpack --mode development",
-    "build-css": "node-sass assets/app.scss --output-style compressed > assets/app.css",
-    "build-css:dev": "node-sass assets/app.scss --output-style expanded > assets/app.css"
+    "build-css": "node-sass assets/scss/app.scss --output-style compressed > assets/app.css",
+    "build-css:dev": "node-sass assets/scss/app.scss --output-style expanded > assets/app.css"
   },
   "dependencies": {
     "lz-string": "^1.4.4",
