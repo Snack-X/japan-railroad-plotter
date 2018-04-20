@@ -1,0 +1,31 @@
+.hover-plots {
+  padding: 0 .5rem;
+  width: 24rem;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+.plots-controls {
+  padding: 1rem 0;
+  border-bottom: 1px solid #fff;
+  text-align: center;
+}
+
+.plot-item {
+  margin: .5rem 0;
+}
+
+.plot-controls {
+  text-align: right;
+}
+
+.plot-controls > button {
+  margin-left: .25rem;
+  padding: .15rem .3rem;
+  font-size: .75rem;
+  line-height: 1rem;
+}
+
+.plot-controls var {
+  font-style: normal;
+}

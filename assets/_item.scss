@@ -1,0 +1,21 @@
+.item-list {
+  list-style-type: none;
+  overflow-y: auto;
+}
+
+.item-item {
+  padding: .25rem .5rem;
+}
+
+.name-primary, .name-secondary {
+  padding-right: .5rem;
+  white-space: nowrap;
+}
+
+.name-primary {
+  font-size: 1.25rem;
+}
+
+.name-secondary {
+  font-size: .8rem;
+}

@@ -1,0 +1,7 @@
+{ "presets": [
+  ["env", {
+    "targets": {
+      "browsers": ["since 2017-07"],
+    },
+  }],
+]}
