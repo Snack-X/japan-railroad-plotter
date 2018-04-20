@@ -50,12 +50,27 @@ button {
   background: rgba(0, 0, 0, 0.8);
 }
 
-.hover-left { left: 1rem; }
-.hover-right { right: 1rem; }
-.hover-bottom { bottom: 1rem; }
-.hover-top { top: 1rem; }
+body.hide-hover .hover { display: none; }
 
-.hover-watermark a { color: #fff; }
+.hover-watermark {
+  left: 0;
+  bottom: 0;
+
+  a { color: #fff; }
+}
+
+.button-show-hover {
+  display: none;
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  padding: .25rem .5rem;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  cursor: pointer;
+}
+
+body.hide-hover .button-show-hover { display: block; }
 
 @import "loading";
 @import "modal";

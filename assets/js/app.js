@@ -212,6 +212,9 @@ function bindEvents() {
   $(".modal-action-import-jrp").addEventListener("click", importPlotsFromBase64);
 
   $(".export-jrp").addEventListener("click", exportPlotsAsBase64);
+
+  $(".button-hide-hover").addEventListener("click", hideHovers);
+  $(".button-show-hover").addEventListener("click", showHovers);
 }
 
 //==============================================================================
@@ -526,6 +529,11 @@ function importPlotsFromBase64() {
     log(plots);
   }
 }
+
+//==============================================================================
+
+function hideHovers() { $("body").classList.add("hide-hover"); }
+function showHovers() { $("body").classList.remove("hide-hover"); }
 
 //==============================================================================
 

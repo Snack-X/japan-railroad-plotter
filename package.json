@@ -14,8 +14,8 @@
     "build-js": "webpack --mode production",
     "watch-js": "webpack --watch --mode development",
 
-    "build-css": "node-sass assets/scss/app.scss --output-style compressed > assets/app.css",
-    "watch-css": "node-sass assets/scss/app.scss --watch --output-style expanded > assets/app.css"
+    "build-css": "node-sass assets/scss/app.scss --output-style compressed assets/app.css",
+    "watch-css": "node-sass assets/scss/app.scss --watch --output-style expanded assets/app.css"
   },
   "dependencies": {
     "lz-string": "^1.4.4",
