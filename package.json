@@ -7,11 +7,15 @@
   "scripts": {
     "preview-py2": "python -m SimpleHTTPServer",
     "preview-py3": "python3 -m http.server",
+
+    "watch": "concurrently -n JS,CSS 'npm run watch-js' 'npm run watch-css'",
     "build": "npm run build-js && npm run build-css",
+
     "build-js": "webpack --mode production",
-    "build-js:dev": "webpack --mode development",
+    "watch-js": "webpack --watch --mode development",
+
     "build-css": "node-sass assets/scss/app.scss --output-style compressed > assets/app.css",
-    "build-css:dev": "node-sass assets/scss/app.scss --output-style expanded > assets/app.css"
+    "watch-css": "node-sass assets/scss/app.scss --watch --output-style expanded > assets/app.css"
   },
   "dependencies": {
     "lz-string": "^1.4.4",
@@ -22,6 +26,7 @@
     "babel-core": "^6.26.0",
     "babel-loader": "^7.1.4",
     "babel-preset-env": "^1.6.1",
+    "concurrently": "^3.5.1",
     "node-sass": "^4.8.3",
     "webpack": "^4.6.0",
     "webpack-cli": "^2.0.14"
