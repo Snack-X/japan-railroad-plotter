@@ -1,6 +1,6 @@
 # Japan Railroad Plotter Changelog
 
-## v1.2.0 (2018-??-??)
+## v1.2.0 (2018-04-21)
 
 * 한글 사용
 * UI 수정
