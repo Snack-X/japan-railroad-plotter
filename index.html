@@ -10,7 +10,7 @@
   <div class="loading-indicator">Loading...</div>
 </div>
 
-<div class="modal modal-export-jrp">
+<div class="modal modal-data modal-export-jrp">
   <div class="modal-body">
     <div class="modal-title">JRP 데이터 내보내기</div>
     <textarea readonly></textarea>
@@ -18,11 +18,19 @@
   </div>
 </div>
 
-<div class="modal modal-import-jrp">
+<div class="modal modal-data modal-import-jrp">
   <div class="modal-body">
     <div class="modal-title">JRP 데이터 가져오기</div>
     <textarea></textarea>
     <button class="modal-action-import-jrp">가져오기</button>
+    <button class="modal-close">닫기</button>
+  </div>
+</div>
+
+<div class="modal modal-data modal-export-polyline">
+  <div class="modal-body">
+    <div class="modal-title"><a target="_blank" href="https://developers.google.com/maps/documentation/utilities/polylinealgorithm">Google Polyline</a> 내보내기</div>
+    <textarea readonly></textarea>
     <button class="modal-close">닫기</button>
   </div>
 </div>
@@ -36,6 +44,7 @@
     <button class="button-hide-hover">UI 숨기기</button>
     <button class="import-jrp">JRP 가져오기</button>
     <button class="export-jrp">JRP 내보내기</button>
+    <button class="export-polyline">Polyline 내보내기</button>
     <!-- <button class="export-geojson">Export (GeoJSON)</button> -->
   </div>
   <ul class="item-list plot-list">

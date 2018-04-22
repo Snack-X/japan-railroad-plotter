@@ -231,6 +231,7 @@ function bindEvents() {
   $(".modal-action-import-jrp").addEventListener("click", importPlotsFromBase64);
 
   $(".export-jrp").addEventListener("click", exportPlotsAsBase64);
+  $(".export-polyline").addEventListener("click", exportPlotsAsPolyline);
 
   $(".button-hide-hover").addEventListener("click", hideHovers);
   $(".button-show-hover").addEventListener("click", showHovers);
@@ -438,7 +439,9 @@ function addPlotItem(lines, start, end) {
       lineName: lines[0].properties.lineName,
       company: lines[0].properties.company,
       start: start.properties.groupId,
+      startName: start.properties.stationName,
       end: end.properties.groupId,
+      endName: end.properties.stationName,
       color: "#000000",
       width: 1,
     },
@@ -451,9 +454,10 @@ function addPlotItem(lines, start, end) {
   };
   JRP.plots.push(plot);
 
-  const _li = _makePlotItem(lines[0].properties.lineName,
-    start.properties.stationName + " → " +
-    end.properties.stationName);
+  const _li = _makePlotItem(
+    plot.properties.lineName,
+    plot.properties.startName + " → " + plot.properties.endName
+  );
 
   _li.setAttribute("data-index", plotIndex);
   _li.$(".action-delete").addEventListener("click", deletePlotItem);
@@ -547,6 +551,24 @@ function importPlotsFromBase64() {
     log(e);
     log(plots);
   }
+}
+
+function exportPlotsAsPolyline() {
+  const data = [];
+
+  JRP.plots.forEach(plot => {
+    data.push(
+      `${plot.properties.company} - ${plot.properties.lineName} - ` +
+      `${plot.properties.startName} -> ${plot.properties.endName}`
+    );
+    data.push(google.maps.geometry.encoding.encodePath(plot.object.getPath()));
+  });
+
+  const output = data.join("\n");
+
+  $(".modal-export-polyline").$show();
+  $(".modal-export-polyline textarea").value = output;
+  $(".modal-export-polyline textarea").select();
 }
 
 //==============================================================================

@@ -8,10 +8,12 @@
 html, body { height: 100%; }
 
 button {
-  padding: .2rem .5rem;
+  margin: .1rem 0;
+  padding: .1rem .3333rem;
   background-color: #ddd;
   border: 1px solid #ccc;
   border-radius: .2rem;
+  font-size: .75rem;
   cursor: pointer;
 
   &:hover { background: #e7e7e7; }

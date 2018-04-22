@@ -25,9 +25,11 @@
   font-weight: bold;
   text-align: center;
   color: white;
+
+  a { color: white; }
 }
 
-.modal-export-jrp, .modal-import-jrp {
+.modal-data {
   textarea {
     margin-bottom: .5rem;
     padding: .25rem;
