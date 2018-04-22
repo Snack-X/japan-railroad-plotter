@@ -194,10 +194,29 @@ async function loadData() {
 }
 
 function loadGoogleMaps() {
-  JRP.map = new google.maps.Map($("#google-map"), {
-    center: { lat: 37, lng: 137 },
-    zoom: 5,
+  const hostname = location.hostname;
+
+  const googleUrl = "https://maps.googleapis.com/maps/api/js?libraries=geometry";
+  const googleKey = "&key=AIzaSyDXfYkzPkfNqI8ZjHsgzuraxhOjMsPg-O8";
+
+  const s = document.createElement("script");
+  s.type = "text/javascript";
+
+  if(hostname === "localhost")
+    s.src = googleUrl;
+  else if(hostname.match(/snack\.studio$/))
+    s.src = googleUrl + googleKey;
+  else
+    s.src = googleUrl;
+
+  s.addEventListener("load", function() {
+    JRP.map = new google.maps.Map($("#google-map"), {
+      center: { lat: 37, lng: 137 },
+      zoom: 5,
+    });
   });
+
+  document.head.appendChild(s);
 }
 
 function bindEvents() {
