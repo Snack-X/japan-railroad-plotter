@@ -1,5 +1,9 @@
 # Japan Railroad Plotter Changelog
 
+## v1.2.1 (2018-04-22)
+
+* [Google Polyline](https://developers.google.com/maps/documentation/utilities/polylinealgorithm) 내보내기 기능 추가
+
 ## v1.2.0 (2018-04-21)
 
 * 한글 사용
