@@ -1,33 +1,5 @@
-# 스위치백
-
-* 豊肥線
-  * 瀬田 - 立野 - 赤水
-
-# 지선
-
-* 中央線
-  * 岡谷 - 辰野 - 塩尻
-* 函館線
-  * 大沼 - 渡島沼尻 - 森
-
-# 타회사 연결
-
-* 北陸新幹線
-  * 上田 - 長野 - 飯山
-
-# 순환선
-
-* 大江戸線
-  * 都庁前 → 代々木
-  * 都庁前 → 東新宿
-  * `NobwRANglgdgpgOQIYFs5gFxgIwCZDvyoFu+g5JqD6NoBxGhYANGAMYD2KADkjAJ6ZiCO5oDVygvwk0wAZwAuSAE6iuAUQBCABgDMAfWwBWJQoAsC7NiFwYAE1mLVGrbuxKhjCAwlcAxADNXCzwqEB3KMdEAC0wlAF9qcGh4ZDQuPCIySjsmVg4uPkFaMUlpLHllNU0dPQNaI1M880KrZQB2ZIcnLGcvBXdffyCQ0IBdIA==`
-
-# 직선 상에 위치한 역
-
-```
 [気仙沼線 / 東日本旅客鉄道（旧国鉄） / 35, 36]
   ベイサイドアリーナ [10199] <false>
-  * BRT 구간
 
 [大船渡線 / 東日本旅客鉄道（旧国鉄） / 37]
   奇跡の一本松 [9975] <false>
@@ -35,7 +7,6 @@
   長部 [10201] <false>
   高田高校前 [10202] <false>
   大船渡魚市場前 [10218] <true>
-  * BRT 구간
 
 [花輪線 / 東日本旅客鉄道（旧国鉄） / 42, 43]
   北森 [10080] <true>
@@ -113,7 +84,6 @@
   東名 [10196] <true>
   野蒜 [10197] <true>
   石巻あゆみ野 [10243] <true>
-  * 데이터 오류
 
 [東西線 / 仙台市 / 679]
   六丁の目 [10206] <true>
@@ -132,5 +102,3 @@
   狸小路 [10221] <true>
   狸小路 [10222] <true>
 
-
-```
