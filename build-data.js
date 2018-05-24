@@ -33,6 +33,7 @@ const runMapshaper = commands => new Promise((resolve, reject) => {
            endYear = parseInt(endYear)
            groupId = (this.id == 6053) ? "EB03_a14208001" :
                      (this.id == 6055) ? "EB03_a14208003" : groupId' \
+    -each 'company = (company === "上信電気鉄道") ? "上信電鉄" : company'
     -filter 'endYear == 9999' \
     -rename-layers stations \
     -o data/japan-railway-station.json format=topojson precision=0.00001`);

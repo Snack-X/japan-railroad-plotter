@@ -1,5 +1,9 @@
 # Japan Railroad Plotter Changelog
 
+## v1.2.2 (2018-xx-xx)
+
+* 일부 역이 제대로 검색되지 않는 문제를 해결
+
 ## v1.2.1 (2018-04-22)
 
 * [Google Polyline](https://developers.google.com/maps/documentation/utilities/polylinealgorithm) 내보내기 기능 추가
