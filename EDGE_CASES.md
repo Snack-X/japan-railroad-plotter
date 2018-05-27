@@ -91,6 +91,9 @@
   富山 [10085] <true>
   新高岡 [10086] <true>
 
+  糸魚川 → 富山
+  NobwRANglgdgpgOQIYFs5gFxkOjKgPNMA2mgnnqBbvmADRgDGA9igA5IwCemYg/pGCnpoDTmgo6aBF2oBEkwMoJgCH/A56aBftQGBIf/JgAzgBckAJ0WsAogCEADAGYA+gEYAbEZ3mdAJjlLVi5GlaAPn0Ba2YF3dOXBgATTbsNTc0sAFi9fR3QsQBntQEcdORoIahVWAGIdDMy5AHcoH0UAC0wjAF8AXSA=
+
 [北しなの線 / しなの鉄道 / 660]
   牟礼 [10091] <true>
   古間 [10092] <true>
