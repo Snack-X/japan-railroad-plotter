@@ -19,6 +19,24 @@ function findRoute(lines, start, end) {
   return route;
 }
 
+function findMidpoint(lines, middle) {
+  for(let lineIndex = 0 ; lineIndex < lines.length ; lineIndex++) {
+    for(let coordIndex = 0 ; coordIndex < lines[lineIndex].length - 1 ; coordIndex++) {
+      const start = lines[lineIndex][coordIndex];
+      const end = lines[lineIndex][coordIndex + 1];
+
+      const startToMiddle = distance( start[2],  start[1], middle[1], middle[0]),
+            middleToEnd   = distance(middle[1], middle[0],    end[2],    end[1]),
+            startToEnd    = distance( start[2],  start[1],    end[2],    end[1]);
+
+      if(Math.round(startToMiddle + middleToEnd) === Math.round(startToEnd))
+        return [ lineIndex, coordIndex, coordIndex + 1 ];
+    }
+  }
+
+  return false;
+}
+
 function findRouteInHardWay(lineFeatures, startFeature, endFeature) {
   // 시작 역에서부터 양쪽 방향으로 나아가며 갈림길이 나타날 때마다 분기하여 경로를 찾음
 
@@ -70,7 +88,7 @@ function findRouteInHardWay(lineFeatures, startFeature, endFeature) {
   log("intersections", intersections);
 
   // 시작과 끝이 어디에 있는지 찾기
-  const start = [], end = [];
+  let start = [ null, null, false ], end = [ null, null, false ];
   for(let lineIndex = 0 ; lineIndex < lines.length ; lineIndex++) {
     for(let coordIndex = 0 ; coordIndex < lines[lineIndex].length ; coordIndex++) {
       const coord = lines[lineIndex][coordIndex];
@@ -84,22 +102,81 @@ function findRouteInHardWay(lineFeatures, startFeature, endFeature) {
         end[1] = coordIndex;
       }
 
-      if(start.length && end.length) break;
+      if(start[0] !== null && end[0] !== null) break;
     }
 
-    if(start.length && end.length) break;
+    if(start[0] !== null && end[0] !== null) break;
   }
 
+  // 시작이나 끝을 찾지 못한 경우 (직선 위에 역이 위치한 경우)
+  if(start[0] === null) {
+    log("start over straight line");
+    const midpoint = findMidpoint(lines, startFeature.geometry.coordinates);
+
+    if(midpoint === false) {
+      log("start is not over any line");
+      return false;
+    }
+
+    start[0] = midpoint[0];
+    start[1] = midpoint[1];
+    start[2] = midpoint[2];
+  }
+  if(end[0] === null) {
+    log("end over straight line");
+    const midpoint = findMidpoint(lines, endFeature.geometry.coordinates);
+
+    if(midpoint === false) {
+      log("end is not over any line");
+      return false;
+    }
+
+    end[0] = midpoint[0];
+    end[1] = midpoint[1];
+    end[2] = midpoint[2];
+  }
   log("start end", start, end);
 
   // 시작점에서부터 양쪽으로 찾아나가기
-  const routes = findRoutesRecursive(lines, intersections, start, end, DIR_START, []);
+  const routes = findRoutesRecursive(lines, intersections, start, end);
+
+  // 직선 위에 역이 위치한 경우 처리
+  if(start[3] !== false)
+    routes.push(...findRoutesRecursive(lines, intersections, [ start[0], start[2] ], end));
+  if(end[3] !== false)
+    routes.push(...findRoutesRecursive(lines, intersections, start, [ end[0], end[2] ]));
+  if(start[3] !== false && end[3] !== false)
+    routes.push(...findRoutesRecursive(lines, intersections, [ start[0], start[2] ], [ end[0], end[2] ]));
+
   if(routes.length === 0) return false;
+
+  for(let i = 0 ; i < routes.length ; i++) {
+    const route = routes[i];
+
+    if(route[0][0] === start[0] && (route[0][1] === start[1] || route[0][1] === start[2]))
+      route.unshift(startFeature.geometry.coordinates);
+
+    if(route[0][0] === end[0] && (route[0][1] === end[1] || route[0][1] === end[2]))
+      route.unshift(endFeature.geometry.coordinates);
+
+    const last = route.length - 1;
+
+    if(route[last][0] === start[0] && (route[last][2] === start[1] || route[last][2] === start[2]))
+      route.push(startFeature.geometry.coordinates);
+
+    if(route[last][0] === end[0] && (route[last][2] === end[1] || route[last][2] === end[2]))
+      route.push(endFeature.geometry.coordinates);
+  }
+
+  log("final route candidates", routes);
 
   const candidates = routes.map(
     directions => [].concat(
       ...directions.map(
-        ([ lineIndex, start, end ]) => {
+        arr => {
+          if(arr.length === 2) return [[ null, arr[0], arr[1] ]];
+
+          const [ lineIndex, start, end ] = arr;
           if(start < end) return lines[lineIndex].slice(start, end + 1);
           else return lines[lineIndex].slice(end, start + 1).reverse();
         }
@@ -119,7 +196,7 @@ function findRouteInHardWay(lineFeatures, startFeature, endFeature) {
   return candidatesWithLength[0][0];
 }
 
-function findRoutesRecursive(lines, intersections, start, end, prevDirection, visited = []) {
+function findRoutesRecursive(lines, intersections, start, end, prevDirection = DIR_START, visited = []) {
   log("----------------------------------------------------------");
 
   const routes = [];
