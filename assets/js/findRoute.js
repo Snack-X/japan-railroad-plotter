@@ -141,11 +141,11 @@ function findRouteInHardWay(lineFeatures, startFeature, endFeature) {
   const routes = findRoutesRecursive(lines, intersections, start, end);
 
   // 직선 위에 역이 위치한 경우 처리
-  if(start[3] !== false)
+  if(start[2] !== false)
     routes.push(...findRoutesRecursive(lines, intersections, [ start[0], start[2] ], end));
-  if(end[3] !== false)
+  if(end[2] !== false)
     routes.push(...findRoutesRecursive(lines, intersections, start, [ end[0], end[2] ]));
-  if(start[3] !== false && end[3] !== false)
+  if(start[2] !== false && end[2] !== false)
     routes.push(...findRoutesRecursive(lines, intersections, [ start[0], start[2] ], [ end[0], end[2] ]));
 
   if(routes.length === 0) return false;
@@ -153,18 +153,22 @@ function findRouteInHardWay(lineFeatures, startFeature, endFeature) {
   for(let i = 0 ; i < routes.length ; i++) {
     const route = routes[i];
 
-    if(route[0][0] === start[0] && (route[0][1] === start[1] || route[0][1] === start[2]))
+    if(start[2] !== false && route[0][0] === start[0] &&
+      (route[0][1] === start[1] || route[0][1] === start[2]))
       route.unshift(startFeature.geometry.coordinates);
 
-    if(route[0][0] === end[0] && (route[0][1] === end[1] || route[0][1] === end[2]))
+    if(end[2] !== false && route[0][0] === end[0] &&
+      (route[0][1] === end[1] || route[0][1] === end[2]))
       route.unshift(endFeature.geometry.coordinates);
 
     const last = route.length - 1;
 
-    if(route[last][0] === start[0] && (route[last][2] === start[1] || route[last][2] === start[2]))
+    if(start[2] !== false && route[last][0] === start[0] &&
+      (route[last][2] === start[1] || route[last][2] === start[2]))
       route.push(startFeature.geometry.coordinates);
 
-    if(route[last][0] === end[0] && (route[last][2] === end[1] || route[last][2] === end[2]))
+    if(end[2] !== false && route[last][0] === end[0] &&
+      (route[last][2] === end[1] || route[last][2] === end[2]))
       route.push(endFeature.geometry.coordinates);
   }
 
