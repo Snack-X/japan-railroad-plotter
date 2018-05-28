@@ -1,5 +1,6 @@
 const topojson = require("topojson");
 const LZString = require("lz-string");
+const FileSaver = require("file-saver");
 
 const { VERSION_RAILROAD, VERSION_STATION } = require("./dataRevision");
 
@@ -232,6 +233,7 @@ function bindEvents() {
 
   $(".export-jrp").addEventListener("click", exportPlotsAsBase64);
   $(".export-polyline").addEventListener("click", exportPlotsAsPolyline);
+  $(".export-kml").addEventListener("click", exportPlotsAsKml);
 
   $(".button-hide-hover").addEventListener("click", hideHovers);
   $(".button-show-hover").addEventListener("click", showHovers);
@@ -569,6 +571,73 @@ function exportPlotsAsPolyline() {
   $(".modal-export-polyline").$show();
   $(".modal-export-polyline textarea").value = output;
   $(".modal-export-polyline textarea").select();
+}
+
+function exportPlotsAsKml() {
+  const data = [];
+  const now = new Date();
+
+  const styles = {};
+  const placemarks = [];
+
+  data.push(`<?xml version="1.0" encoding="UTF-8"?>`);
+  data.push(`<kml xmlns="http://www.opengis.net/kml/2.2">`);
+  data.push(`<Document>`);
+  data.push(`<name>Japan Railroad Plotter (${now.toISOString()})</name>`);
+
+  JRP.plots.forEach(plot => {
+    const color = plot.properties.color;
+    const width = plot.properties.width;
+
+    const colorRgb = color.substr(1);
+    const colorBgr = color.substr(5, 2) + color.substr(3, 2) + color.substr(1, 2);
+    const styleKey = `line-${colorRgb}-${Math.round(width * 1000)}`;
+
+    styles[styleKey] = [
+      `<LineStyle>`,
+        `<color>ff${colorBgr}</color>`,
+        `<width>${width}</width>`,
+      `</LineStyle>`,
+    ].join("");
+
+    const placemark = [
+      `<Placemark>`,
+        `<name>${plot.properties.startName} → ${plot.properties.endName}</name>`,
+        `<description><![CDATA[${plot.properties.company}<br>${plot.properties.lineName}]]></description>`,
+        `<styleUrl>#${styleKey}</styleUrl>`,
+        `<LineString>`,
+          `<tessellate>1</tessellate>`,
+          `<coordinates>`,
+            plot.coordinates
+                .map(([ lat, lng ]) => `${lat.toFixed(5)},${lng.toFixed(5)},0`)
+                .join("\n"),
+          `</coordinates>`,
+        `</LineString>`,
+      `</Placemark>`,
+    ].join("");
+    placemarks.push(placemark);
+
+    // Placemark
+    //   name
+    //   Point
+    //     coordinates
+    //       lat,lng,0
+  });
+
+  for(const styleKey in styles)
+    data.push(`<Style id="${styleKey}">${styles[styleKey]}</Style>`);
+
+  for(const placemark of placemarks)
+    data.push(placemark);
+
+  data.push(`</Document>`);
+  data.push(`</kml>`);
+
+  const output = data.join("\n");
+
+  const blob = new Blob([ output ], { type: "application/vnd.google-earth.kml+xml; charset=utf-8" });
+  const filename = `Japan Railroad Plotter (${now.toISOString()}).kml`;
+  FileSaver.saveAs(blob, filename);
 }
 
 //==============================================================================
