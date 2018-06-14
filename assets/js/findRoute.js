@@ -74,8 +74,12 @@ function findRouteInHardWay(lineFeatures, startFeature, endFeature) {
     for(let ei = 0 ; ei < endpoints.length ; ei++) {
       const toFind = [ endpoints[ei][1][1], endpoints[ei][1][2] ];
       const intersection = lines[lineIndex].filter(
-        ([p, x, y]) => endpoints[ei][1][0] !== p && compareCoordinate([x, y], toFind)
+        ([p, x, y]) => (
+          (endpoints[ei][0] !== lineIndex || endpoints[ei][1][0] !== p) &&
+          compareCoordinate([x, y], toFind)
+        )
       )[0];
+
       if(intersection) {
         log(`${lineIndex}[${intersection[0]}] - ${endpoints[ei][0]}[${endpoints[ei][1][0]}]`);
 

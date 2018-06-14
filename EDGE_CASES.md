@@ -116,7 +116,10 @@
   東名 [10196] <true>
   野蒜 [10197] <true>
   石巻あゆみ野 [10243] <true>
-  * 데이터 오류
+  * 데이터 오류 (수정됨)
+
+  あおば通 → 石巻
+  NobwRANglgdgpgOQIYFs5gFxkJtyhn90Fu+YANGAMYD2KADkjAJ6ZiCO5oKemgNOaCjpoEXagIkmDKCYAh/wOemgX7UegSH/iYAM4AXJACdZjAKIAhAAwBmAPoBGAEwGNATg0a9UuYtnI0jQEIMgKQZADgyAsBKlwYAE1WbdhsZmWpYkXt526Fi4gN+6UhQQ5AqMAMTm6RpSAO5Q3rIAFph6AL4AukA=
 
 [東西線 / 仙台市 / 679]
   六丁の目 [10206] <true>
