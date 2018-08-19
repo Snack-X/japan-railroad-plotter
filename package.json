@@ -17,16 +17,16 @@
   "dependencies": {
     "file-saver": "^1.3.8",
     "lz-string": "^1.4.4",
-    "mapshaper": "^0.4.64",
+    "mapshaper": "^0.4.91",
     "topojson": "^3.0.2"
   },
   "devDependencies": {
-    "babel-core": "^6.26.0",
-    "babel-loader": "^7.1.4",
-    "babel-preset-env": "^1.6.1",
-    "concurrently": "^3.5.1",
-    "node-sass": "^4.8.3",
-    "webpack": "^4.6.0",
-    "webpack-cli": "^2.0.14"
+    "babel-core": "^6.26.3",
+    "babel-loader": "^7.1.5",
+    "babel-preset-env": "^1.7.0",
+    "concurrently": "^3.6.1",
+    "node-sass": "^4.9.3",
+    "webpack": "^4.16.5",
+    "webpack-cli": "^2.1.5"
   }
 }
