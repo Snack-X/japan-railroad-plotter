@@ -4,10 +4,10 @@ const topojson = require("topojson");
 
 console.error("* Loading and converting data");
 
-const topoRailroads = require("./japan-railway-railroad.json");
+const topoRailroads = require("../dist/data/railroad.json");
 const railroads = topojson.feature(topoRailroads, topoRailroads.objects.railroads);
 
-const topoStations = require("./japan-railway-station.json");
+const topoStations = require("../dist/data/station.json");
 const stations = topojson.feature(topoStations, topoStations.objects.stations);
 
 console.error(`* Number of railroads: ${railroads.features.length}`);

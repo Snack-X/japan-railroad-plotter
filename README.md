@@ -4,15 +4,15 @@ Go to [https://jrp.snack.studio](https://jrp.snack.studio).
 
 ## Data
 
-Source data is quite huge and not included on this repository. You should download source data by yourself and place them under `data_raw` directory.
+Source data is quite huge and not included on this repository. You should download source data by yourself and place them under `src/data` directory.
 
 * http://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N05-v1_3.html
 
-`data_raw` directory tree should look like this:
+`src/data` directory tree should look like this:
 
 ```
-data_raw/
-    japan-railway/
+src/
+    data/
         KS-META-N05-16.xml
         N05-16.xml
         N05-16_RailroadSection2.dbf
@@ -27,7 +27,7 @@ data_raw/
         N05-16_Station2.shx
 ```
 
-After running `npm install` and `build-data.js` scripts, `data` directory will contain coverted smaller data.
+After running `npm install` and `scripts/build-data.js` scripts, `dist/data` directory will contain coverted smaller data.
 
 For more information, please refer to the website.
 
