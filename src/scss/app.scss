@@ -5,7 +5,10 @@
   font-family: sans-serif;
 }
 
-html, body { height: 100%; }
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
 
 button {
   margin: .1rem 0;
@@ -52,7 +55,7 @@ button {
   background: rgba(0, 0, 0, 0.8);
 }
 
-body.hide-hover .hover { display: none; }
+body.hovers-hidden .hover { display: none; }
 
 .hover-watermark {
   left: 0;
@@ -61,7 +64,7 @@ body.hide-hover .hover { display: none; }
   a { color: #fff; }
 }
 
-.button-show-hover {
+.button-show-hovers {
   display: none;
   position: fixed;
   right: 0;
@@ -72,7 +75,7 @@ body.hide-hover .hover { display: none; }
   cursor: pointer;
 }
 
-body.hide-hover .button-show-hover { display: block; }
+body.hovers-hidden .button-show-hovers { display: block; }
 
 @import "loading";
 @import "modal";

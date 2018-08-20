@@ -1,6 +1,6 @@
 {
   "name": "japan-railroad-plotter",
-  "version": "1.3.1",
+  "version": "2.0.0",
   "description": "Japan Railroad Plotter",
   "author": "Snack <korsnack@korsnack.kr>",
   "license": "MIT",
@@ -11,14 +11,15 @@
     "build": "npm run build-js && npm run build-css",
     "build-js": "webpack --mode production",
     "watch-js": "webpack --watch --mode development",
-    "build-css": "node-sass assets/scss/app.scss --output-style compressed assets/app.css",
-    "watch-css": "node-sass assets/scss/app.scss --watch --output-style expanded assets/app.css"
+    "build-css": "node-sass src/scss/app.scss --output-style compressed dist/css/app.css",
+    "watch-css": "node-sass src/scss/app.scss --watch --output-style expanded dist/css/app.css"
   },
   "dependencies": {
     "file-saver": "^1.3.8",
     "lz-string": "^1.4.4",
     "mapshaper": "^0.4.91",
-    "topojson": "^3.0.2"
+    "topojson-client": "^3.0.0",
+    "umbrellajs": "^3.1.0"
   },
   "devDependencies": {
     "babel-core": "^6.26.3",
