@@ -126,6 +126,23 @@ class JRPlotter {
     const feature = this.stations.features[info.index];
     return feature;
   }
+
+  getRoute(type, railroadHash, startHash, endHash) {
+    let lineStrings;
+
+    if (type === 'line') {
+      
+    }
+
+    const start = this.getStationFeature(startHash),
+          end = this.getStationFeature(endHash);
+
+    if (!start || !end) return null;
+    
+    // [ lng, lat ]
+    const startCoord = start.geometry.coordinates,
+          endCoord = end.geometry.coordinates;
+  }
 }
 
 module.exports = JRPlotter;

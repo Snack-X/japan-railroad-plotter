@@ -24,6 +24,11 @@ function geoDistance(lat1, lng1, lat2, lng2) {
   return R * c;
 }
 
+function geoCompare(lat1, lng1, lat2, lng2) {
+  return Math.round(lat1 * 100000) === Math.round(lat2 * 100000) &&
+    Math.round(lng1 * 100000) === Math.round(lng2 * 100000);
+}
+
 function hash32(str) {
   let hash = 5381, i = str.length;
   while (i) hash = (hash * 33) ^ str.charCodeAt(--i);
@@ -34,6 +39,7 @@ module.exports = {
   geo: {
     length: geoLength,
     distance: geoDistance,
+    compare: geoCompare,
   },
   hash32: hash32
 };
