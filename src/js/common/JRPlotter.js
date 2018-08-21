@@ -1,6 +1,8 @@
 const topojson = require('topojson-client');
 const utils = require('./utils');
 
+const TYPE_PRIORITY = { line: 1, series: 2, route: 3 };
+
 class JRPlotter {
   constructor(topoRailroad, topoStation) {
     this.railroads = topojson.feature(topoRailroad, topoRailroad.objects.railroads);
@@ -57,6 +59,8 @@ class JRPlotter {
   }
 
   getRailroadFeatures(hash) {
+    hash = parseInt(hash);
+
     const info = this.railroadHashes.get(hash);
     if (!info) return false;
 
@@ -94,10 +98,18 @@ class JRPlotter {
 
     // Find from series
 
+    hits.sort((a, b) => (
+      (TYPE_PRIORITY[a.type] - TYPE_PRIORITY[b.type]) ||
+      (a.company && b.company && a.company.localeCompare(b.company)) ||
+      a.line.localeCompare(b.line)
+    ));
+
     return hits;
   }
 
   getStationsFromLine(hash) {
+    hash = parseInt(hash);
+
     const stations = this.mapLineStation.get(hash);
     if (!stations) return false;
 
@@ -106,6 +118,8 @@ class JRPlotter {
   }
 
   getStationFeature(hash) {
+    hash = parseInt(hash);
+
     const info = this.stationHashes.get(hash);
     if (!info) return false;
 

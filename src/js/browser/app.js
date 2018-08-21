@@ -1,15 +1,24 @@
 const LZString = require('lz-string');
 const $ = require('umbrellajs');
-window.$ = $;
+
+$.prototype.removeAttr = function (name) {
+  this.each(node => node.removeAttribute(name));
+};
 
 const JRPlotter = require('../common/JRPlotter');
-const { VERSION_RAILROAD, VERSION_STATION } = require('../common/dataRevision');
+const { REV_RAILROAD, REV_STATION } = require('../common/dataRevision');
+const fragments = require('./fragments');
 
 const log = (...args) => {
   console.log(`[${new Date().toLocaleString()}]`, ...args);
 };
 
 //==============================================================================
+
+const STATE_IDLE = 0,
+      STATE_SELECTING_RAILROAD = 1,
+      STATE_SELECTING_START = 2,
+      STATE_SELECTING_END = 3;
 
 class App {
   async start() {
@@ -19,9 +28,12 @@ class App {
     this.initGoogleMaps();
     this.initEvents();
 
+    this.state = STATE_IDLE;
+
     $('.loading').removeClass('active');
   }
 
+  // #region Initialization
   async initJRPlotter() {
     const revisionDefault = { railroad: 0, station: 0 };
     const revisionLocal = JSON.parse(localStorage.getItem('revision'));
@@ -32,9 +44,9 @@ class App {
 
     let topoRailroad, topoStation;
 
-    if (revision.railroad < VERSION_RAILROAD || !cachedRailroad) {
+    if (revision.railroad < REV_RAILROAD || !cachedRailroad) {
       log('railroad cache is outdated, downloading');
-      const res = await fetch('dist/data/railroad.json?r=' + VERSION_RAILROAD);
+      const res = await fetch('dist/data/railroad.json?r=' + REV_RAILROAD);
       const data = await res.text();
       topoRailroad = JSON.parse(data);
   
@@ -48,9 +60,9 @@ class App {
       topoRailroad = JSON.parse(decompressed);
     }
   
-    if (revision.station < VERSION_STATION || !cachedStation) {
+    if (revision.station < REV_STATION || !cachedStation) {
       log('station cache is outdated, downloading');
-      const res = await fetch('dist/data/station.json?r=' + VERSION_STATION);
+      const res = await fetch('dist/data/station.json?r=' + REV_STATION);
       const data = await res.text();
       topoStation = JSON.parse(data);
   
@@ -65,7 +77,7 @@ class App {
     }
 
     log('JRP data loaded');
-    const revisionToSave = { railroad: VERSION_RAILROAD, station: VERSION_STATION };
+    const revisionToSave = { railroad: REV_RAILROAD, station: REV_STATION };
     localStorage.setItem('revision', JSON.stringify(revisionToSave));
   
     log('Initializing JRPlotter');
@@ -91,8 +103,8 @@ class App {
       $('body').removeClass('hovers-hidden');
     });
 
-    // $(".search-input input").addEventListener("input", onSearchInput);
-    // $(".state-cancel").addEventListener("click", resetSearch);
+    $('.search-input input').on('input', this.onSearchInput.bind(this));
+    $('.state-cancel').on('click', this.resetSearchState.bind(this));
 
     // Hover & Modals
     $('.button-show-modal-import-jrp').on('click', () => {
@@ -138,6 +150,232 @@ class App {
 
     // $('.modal-action-import-jrp').addEventListener('click', importPlotsFromBase64);
   }
+  // #endregion
+
+  // #region State
+  resetSearchState() {
+    $('.search-result').empty();
+
+    $('.search-input input').removeAttr('disabled');
+    $('.search-input input').first().value = '';
+
+    $('.search-state').removeClass('active');
+    $('.state-current').text('');
+    $('.state-start').text('');
+    $('.state-end').text('');
+
+    this.state = STATE_IDLE;
+    delete this.stateRailroadType;
+    delete this.stateRailroadHash;
+    delete this.stateStartHash;
+    delete this.stateEndHash;
+
+    delete this.previewFeatures;
+    delete this.previewFeature;
+
+    this.previewPolylines = this.statePolylines;
+    this.previewMarker = this.stateMarker;
+    this.clearPreviewFeatures();
+    this.clearPreviewFeature();
+
+    delete this.statePolylines;
+    delete this.stateMarker;
+  }
+
+  enableSearchState(line) {
+    $('.search-state').addClass('active');
+    $('.state-current').text(line);
+
+    $('.search-input input').attr('disabled', 'disabled');
+  }
+
+  setSearchStateStation(station) {
+    if (this.state === STATE_SELECTING_START)
+      $('.state-start').text(station);
+    else if (this.state === STATE_SELECTING_END)
+      $('.state-end').text(station);
+  }
+  // #endregion
+
+  // #region Search railroads
+  onSearchInput(e) {
+    const input = e.target.value.trim();
+    if (input === '') {
+      this.state = STATE_IDLE;
+      return;
+    }
+
+    this.state = STATE_SELECTING_RAILROAD;
+    this.displayRailroadResults(input);
+  }
+
+  onRailroadMouseEnter(e) {
+    const $target = $(e.target);
+    const type = $target.data('type');
+
+    if (type === 'line') {
+      const hash = parseInt($target.data('hash'));
+      const features = this.JRP.getRailroadFeatures(hash);
+      
+      this.previewFeatures = features;
+    }
+
+    this.displayPreviewFeatures();
+  }
+
+  onRailroadMouseLeave(e) {
+    this.clearPreviewFeatures();
+  }
+
+  onRailroadClick(e) {
+    const $target = $(e.target).closest('.search-item');
+    const type = $target.data('type');
+    const hash = parseInt($target.data('hash'));
+
+    this.state = STATE_SELECTING_START;
+
+    this.stateRailroadType = type;
+    this.stateRailroadHash = hash;
+    this.statePolylines = this.previewPolylines;
+    delete this.previewFeatures;
+    delete this.previewPolylines;
+
+    this.enableSearchState($target.find('.name-primary').text());
+    this.displayStationResults(type, hash);
+  }
+
+  //
+
+  displayRailroadResults(keyword) {
+    $('.search-result').empty();
+
+    const result = this.JRP.searchRailroads(keyword);
+
+    result.forEach(railroad => {
+      let $li;
+
+      if (railroad.type === 'line') {
+        $li = fragments.searchItem(railroad.line, railroad.company);
+        $li.data('hash', railroad.hash);
+      }
+
+      $li.data('type', railroad.type);
+
+      $('.search-result').append($li);
+    });
+
+    $('.search-result .search-item')
+      .on('mouseenter', this.onRailroadMouseEnter.bind(this))
+      .on('mouseleave', this.onRailroadMouseLeave.bind(this))
+      .on('click', this.onRailroadClick.bind(this));
+  }
+
+  clearPreviewFeatures() {
+    if (this.previewPolylines) {
+      for (let i = 0 ; i < this.previewPolylines.length ; i++) {
+        this.previewPolylines[i].setMap(null);
+        delete this.previewPolylines[i];
+      }
+
+      this.previewPolylines = [];
+    }
+  }
+
+  displayPreviewFeatures() {
+    this.clearPreviewFeatures();
+
+    const previewPolylines = this.previewFeatures.map(f =>
+      new google.maps.Polyline({
+        path: f.geometry.coordinates.map(([ lng, lat ]) => ({ lat, lng })),
+        strokeColor: '#FF0000',
+        strokeWeight: 1,
+        map: this.map,
+      })
+    );
+
+    this.previewPolylines = previewPolylines;
+  }
+  // #endregion
+
+  // #region Select stations
+  onStationMouseEnter(e) {
+    const $target = $(e.target);
+    const hash = parseInt($target.data('hash'));
+    const feature = this.JRP.getStationFeature(hash);
+
+    this.setSearchStateStation($target.find('.name-primary').text());
+
+    this.previewFeature = feature;
+    this.displayPreviewFeature();
+  }
+
+  onStationMouseLeave(e) {
+    this.clearPreviewFeature();
+  }
+
+  onStationClick(e) {
+    const $target = $(e.target).closest('.search-item');
+    const hash = parseInt($target.data('hash'));
+
+    if (this.state === STATE_SELECTING_START) {
+      this.state = STATE_SELECTING_END;
+
+      this.stateStartHash = hash;
+      this.stateMarker = this.previewMarker;
+
+      delete this.previewFeature;
+      delete this.previewMarker;
+    }
+    else if (this.state === STATE_SELECTING_END) {
+      // this.stateRailroadType
+      // this.stateRailroadHash
+      // this.stateStartHash ~ hash
+    }
+  }
+
+  //
+
+  displayStationResults(type, hash) {
+    $('.search-result').empty();
+
+    let result = [];
+
+    if (type === 'line')
+      result = this.JRP.getStationsFromLine(hash);
+
+    result.forEach(station => {
+      const $li = fragments.searchItem(station.name, station.id);
+      $li.data('hash', station.hash);
+
+      $('.search-result').append($li);
+    });    
+
+    $('.search-result .search-item')
+      .on('mouseenter', this.onStationMouseEnter.bind(this))
+      .on('mouseleave', this.onStationMouseLeave.bind(this))
+      .on('click', this.onStationClick.bind(this));
+  }
+
+  clearPreviewFeature() {
+    if (this.previewMarker) {
+      this.previewMarker.setMap(null);
+      delete this.previewMarker;
+    }
+  }
+
+  displayPreviewFeature() {
+    this.clearPreviewFeature();
+
+    const [ lng, lat ] = this.previewFeature.geometry.coordinates;
+    const previewMarker = new google.maps.Marker({
+      position: { lat, lng },
+      label: this.state === STATE_SELECTING_START ? '始' : '終',
+      map: this.map,
+    });
+
+    this.previewMarker = previewMarker;
+  }
+  // #endregion
 }
 
 //==============================================================================
