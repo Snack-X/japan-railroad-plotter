@@ -29,17 +29,17 @@ function test3(railroadHash, startHash, middleHash, endHash) {
   const middleCoord = middle.geometry.coordinates;
   const endCoord = end.geometry.coordinates;
 
-  findRoute(lineStrings, startCoord, middleCoord);
-  findRoute(lineStrings, middleCoord, endCoord);
+  // findRoute(lineStrings, startCoord, middleCoord);
+  // findRoute(lineStrings, middleCoord, endCoord);
   findRoute(lineStrings, startCoord, endCoord);
 }
 
-// console.log(JRP.searchRailroads('北陸新幹線'));
-// console.log(JRP.getStationsFromLine(1512023999));
+// console.log(JRP.searchRailroads(''));
+// console.log(JRP.getStationsFromLine());
 // process.exit(0);
 
-// 東日本旅客鉄道 - 中央線 / 岡谷 - 辰野 - 塩尻
-test3(3325678932, 257343794, 193061657, 2144342683);
+// 東日本旅客鉄道 - 中央線 / 下諏訪 - 辰野 - 塩尻
+test3(3325678932, 2111621619, 193061657, 2144342683);
 
 // 西日本旅客鉄道 - 北陸新幹線 / 糸魚川 - 富山
 // test2(1512023999, 979583867, 4178370045);
