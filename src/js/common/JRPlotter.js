@@ -131,14 +131,14 @@ class JRPlotter {
     let lineStrings;
 
     if (type === 'line') {
-      
+
     }
 
     const start = this.getStationFeature(startHash),
           end = this.getStationFeature(endHash);
 
     if (!start || !end) return null;
-    
+
     // [ lng, lat ]
     const startCoord = start.geometry.coordinates,
           endCoord = end.geometry.coordinates;
