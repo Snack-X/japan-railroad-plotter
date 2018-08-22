@@ -1,3 +1,5 @@
+require('../../scss/app.scss');
+
 const LZString = require('lz-string');
 const $ = require('umbrellajs');
 
