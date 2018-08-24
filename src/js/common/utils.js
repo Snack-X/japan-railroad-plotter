@@ -1,6 +1,6 @@
 /**
  * Calculate length of a LineString in meters
- * @param {GeoJSON.LineString} lineString
+ * @param {[number, number][]} lineString [Longitude, Latitude][]
  */
 function geoLength(lineString) {
   if (lineString.length < 2) return 0;
@@ -8,7 +8,7 @@ function geoLength(lineString) {
   let result = 0;
 
   for (let i = 1 ; i < lineString.length ; i++)
-    result += distance(
+    result += geoDistance(
       lineString[i - 1][1], lineString[i - 1][0],
       lineString[i    ][1], lineString[i    ][0]
     );

@@ -29,8 +29,8 @@ function test3(railroadHash, startHash, middleHash, endHash) {
   const middleCoord = middle.geometry.coordinates;
   const endCoord = end.geometry.coordinates;
 
-  // findRoute(lineStrings, startCoord, middleCoord);
-  // findRoute(lineStrings, middleCoord, endCoord);
+  findRoute(lineStrings, startCoord, middleCoord);
+  findRoute(lineStrings, middleCoord, endCoord);
   findRoute(lineStrings, startCoord, endCoord);
 }
 
@@ -42,4 +42,4 @@ function test3(railroadHash, startHash, middleHash, endHash) {
 test3(3325678932, 2111621619, 193061657, 2144342683);
 
 // 西日本旅客鉄道 - 北陸新幹線 / 糸魚川 - 富山
-// test2(1512023999, 979583867, 4178370045);
+test2(1512023999, 979583867, 4178370045);

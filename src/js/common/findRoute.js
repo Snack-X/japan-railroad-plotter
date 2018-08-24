@@ -14,8 +14,8 @@ const flip = coord => [ coord[1], coord[0] ];
 
 /**
  * Find `coord` from `lineStrings`
- * @param {[number, number][]} lineStrings Array of LatLng coordinates
- * @param {[number, number][]} coord LatLng coordinate
+ * @param {[number, number][]} lineStrings Array of **LatLng** coordinates
+ * @param {[number, number][]} coord Target **LatLng** coordinate
  * @return {[ number, number, boolean | number ] | boolean}
  *   [ lineIndex, coordIndex, false ] or
  *   [ lineIndex, coordIndexStart, coordIndexEnd ] or false
@@ -49,10 +49,11 @@ function findCoordinate(lineStrings, coord) {
 }
 
 /**
- *
- * @param {[number, number][]} lineStrings Array of LngLat coordinates
- * @param {[number, number]} startCoord LngLat coordinate
- * @param {[number, number]} endCoord LngLat coordinate
+ * 주어진 복수의 LineString에서 두 점을 잇는 가장 짧은 경로를 찾는다
+ * @param {[number, number][]} lineStrings Array of **LngLat** coordinates
+ * @param {[number, number]} startCoord Starting **LngLat** coordinate
+ * @param {[number, number]} endCoord Ending **LngLat** coordinate
+ * @return {[number, number][]} Shortest **LngLat** coordinates
  */
 module.exports = function (lineStrings, startCoord, endCoord) {
   // 시작 지점부터 양쪽 방향으로 나아가며 갈림길에서 분기해 경로를 찾음
@@ -115,14 +116,34 @@ module.exports = function (lineStrings, startCoord, endCoord) {
 
   // 시작점에서부터 양쪽으로 찾아나가기
   const routes = findRecursive(lines, intersections, start, end);
-  console.log(routes);
 
   // LineString으로 변환하여 가장 짧은 경로를 선택
+  const candidates = routes.map(candidate => {
+    const lineString = [].concat(...candidate.map(route => {
+      let [ lidx, start, end ] = route;
+      return lines[route[0]].slice(Math.min(start, end), Math.max(start, end));
+    }));
+
+    return {
+      lineString,
+      segments: candidate.length,
+      length: utils.geo.length(lineString),
+    };
+  });
+
+  candidates.sort((a, b) => (
+    a.length - b.length ||
+    a.segments - b.segments ||
+    a.lineString.length - b.lineString.length
+  ));
+
+  // LatLng -> LatLng
+  return candidates[0].lineString.map(flip);
 }
 
 /**
  * 
- * @param {[number, number][]} lines Array of LatLng coordinates
+ * @param {[number, number][]} lines Array of **LatLng** coordinates
  * @param {any} intersections
  * @param {[number, number]} start [ lineIndex, coordIndex ]
  * @param {[number, number]} end [ lineIndex, coordIndex ]

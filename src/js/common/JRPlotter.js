@@ -1,4 +1,6 @@
 const topojson = require('topojson-client');
+
+const findRoute = require('./findRoute');
 const utils = require('./utils');
 
 const TYPE_PRIORITY = { line: 1, series: 2, route: 3 };
@@ -131,7 +133,7 @@ class JRPlotter {
     let lineStrings;
 
     if (type === 'line') {
-
+      lineStrings = this.getRailroadFeatures(railroadHash).map(f => f.gemoetry.coordinates);
     }
 
     const start = this.getStationFeature(startHash),
@@ -142,6 +144,10 @@ class JRPlotter {
     // [ lng, lat ]
     const startCoord = start.geometry.coordinates,
           endCoord = end.geometry.coordinates;
+
+    // Calculate
+    const route = findRoute(lineStrings, startCoord, endCoord);
+    return route;
   }
 }
 
