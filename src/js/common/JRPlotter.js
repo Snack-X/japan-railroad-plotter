@@ -133,7 +133,7 @@ class JRPlotter {
     let lineStrings;
 
     if (type === 'line') {
-      lineStrings = this.getRailroadFeatures(railroadHash).map(f => f.gemoetry.coordinates);
+      lineStrings = this.getRailroadFeatures(railroadHash).map(f => f.geometry.coordinates);
     }
 
     const start = this.getStationFeature(startHash),

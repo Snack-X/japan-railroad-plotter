@@ -31,6 +31,7 @@ class App {
     this.initEvents();
 
     this.state = STATE_IDLE;
+    this.plots = [];
 
     $('.loading').removeClass('active');
   }
@@ -172,6 +173,8 @@ class App {
     delete this.stateStartHash;
     delete this.stateEndHash;
 
+    this.clearPreviewFeatures();
+    this.clearPreviewFeature();
     delete this.previewFeatures;
     delete this.previewFeature;
 
@@ -329,9 +332,12 @@ class App {
       delete this.previewMarker;
     }
     else if (this.state === STATE_SELECTING_END) {
-      // this.stateRailroadType
-      // this.stateRailroadHash
-      // this.stateStartHash ~ hash
+      const type = this.stateRailroadType;
+      const railroadHash = this.stateRailroadHash;
+      const start = this.stateStartHash, end = hash;
+      this.addPlotItem(type, railroadHash, start, end);
+
+      this.resetSearchState();
     }
   }
 
@@ -377,6 +383,75 @@ class App {
 
     this.previewMarker = previewMarker;
   }
+  // #endregion
+
+  // #region Plots
+  onPlotDelete(e) {
+
+  }
+
+  onPlotChangeColor(e) {
+
+  }
+
+  onPlotChangeWidth(e) {
+
+  }
+
+  //
+
+  addPlotItem(type, railroadHash, startHash, endHash, color = '#000000', width = 1) {
+    const route = this.JRP.getRoute(type, railroadHash, startHash, endHash);
+
+    if (route === false) {
+      alert('Unable to find a route');
+      return;
+    }
+
+    const railroadFeatures = this.JRP.getRailroadFeatures(railroadHash);
+    const lineName = railroadFeatures[0].properties.lineName;
+    const startName = this.JRP.getStationFeature(startHash).properties.stationName;
+    const endName = this.JRP.getStationFeature(endHash).properties.stationName;
+
+    const plotIndex = this.plots.length;
+    const plot = {
+      lineString: route,
+      properties: {
+        type: type,
+        lineName: lineName,
+        lineHash: railroadHash,
+        startName: startName,
+        startHash: startHash,
+        endName: endName,
+        endHash: endHash,
+        color: color,
+        width: width,
+      },
+      polyline: new google.maps.Polyline({
+        path: route.map(([ lng, lat ]) => ({ lat, lng })),
+        strokeColor: color,
+        strokeWidth: width,
+        map: this.map,
+      }),
+    };
+
+    this.plots.push(plot);
+
+    const $plotItem = fragments.plotItem(
+      lineName, `${startName} → ${endName}`,
+      color, width
+    );
+
+    $plotItem.data('index', plotIndex);
+    $plotItem.find('.action-delete').on('click', this.onPlotDelete.bind(this));
+    $plotItem.find('.action-color').on('click', this.onPlotChangeColor.bind(this));
+    $plotItem.find('.action-width').on('click', this.onPlotChangeWidth.bind(this));
+
+    $('.plot-list').append($plotItem);
+
+    return plotIndex;
+  }
+
   // #endregion
 }
 

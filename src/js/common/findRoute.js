@@ -53,7 +53,7 @@ function findCoordinate(lineStrings, coord) {
  * @param {[number, number][]} lineStrings Array of **LngLat** coordinates
  * @param {[number, number]} startCoord Starting **LngLat** coordinate
  * @param {[number, number]} endCoord Ending **LngLat** coordinate
- * @return {[number, number][]} Shortest **LngLat** coordinates
+ * @return {[number, number][] | boolean} Shortest **LngLat** coordinates, or false
  */
 module.exports = function (lineStrings, startCoord, endCoord) {
   // 시작 지점부터 양쪽 방향으로 나아가며 갈림길에서 분기해 경로를 찾음
@@ -121,11 +121,14 @@ module.exports = function (lineStrings, startCoord, endCoord) {
   const candidates = routes.map(candidate => {
     const lineString = [].concat(...candidate.map(route => {
       let [ lidx, start, end ] = route;
-      return lines[route[0]].slice(Math.min(start, end), Math.max(start, end));
+      return (start < end) ?
+        lines[route[0]].slice(start, end) :
+        lines[route[0]].slice(end, start).reverse();
     }));
 
     return {
       lineString,
+      candidate,
       segments: candidate.length,
       length: utils.geo.length(lineString),
     };
