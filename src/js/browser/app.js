@@ -1,26 +1,18 @@
-require('../../scss/app.scss');
-
 const LZString = require('lz-string');
 const $ = require('umbrellajs');
-
 $.prototype.removeAttr = function (name) {
   this.each(node => node.removeAttribute(name));
 };
 
 const JRPlotter = require('../common/JRPlotter');
 const { REV_RAILROAD, REV_STATION } = require('../common/dataRevision');
-const fragments = require('./fragments');
 
+const States = require('./app.states');
 const log = (...args) => {
   console.log(`[${new Date().toLocaleString()}]`, ...args);
 };
 
 //==============================================================================
-
-const STATE_IDLE = 0,
-      STATE_SELECTING_RAILROAD = 1,
-      STATE_SELECTING_START = 2,
-      STATE_SELECTING_END = 3;
 
 class App {
   async start() {
@@ -30,7 +22,7 @@ class App {
     this.initGoogleMaps();
     this.initEvents();
 
-    this.state = STATE_IDLE;
+    this.state = States.IDLE;
     this.plots = [];
 
     $('.loading').removeClass('active');
@@ -106,10 +98,11 @@ class App {
       $('body').removeClass('hovers-hidden');
     });
 
-    $('.search-input input').on('input', this.onSearchInput.bind(this));
+    // Search & State
+    $('.search-input input').on('input', this.eventSearchInput.bind(this));
     $('.state-cancel').on('click', this.resetSearchState.bind(this));
 
-    // Hover & Modals
+    // Modal controls
     $('.button-show-modal-import-jrp').on('click', () => {
       $('.modal-import-jrp').addClass('active');
       $('.modal-import-jrp textarea').value = '';
@@ -155,6 +148,26 @@ class App {
   }
   // #endregion
 
+  // #region Google Maps Helpers
+  newGooglePolyline(lineString, color, width) {
+    return new google.maps.Polyline({
+      path: lineString.map(([ lng, lat ]) => ({ lat, lng })),
+      strokeColor: color,
+      strokeWeight: width,
+      map: this.map,
+    });
+  }
+
+  newGoogleMarker(point, text) {
+    const [ lng, lat ] = point;  
+    return new google.maps.Marker({
+      position: { lat, lng },
+      label: text,
+      map: this.map,
+    });
+  }
+  // #endregion
+
   // #region State
   resetSearchState() {
     $('.search-result').empty();
@@ -167,24 +180,13 @@ class App {
     $('.state-start').text('');
     $('.state-end').text('');
 
-    this.state = STATE_IDLE;
-    delete this.stateRailroadType;
-    delete this.stateRailroadHash;
-    delete this.stateStartHash;
-    delete this.stateEndHash;
+    this.state = States.IDLE;
 
-    this.clearPreviewFeatures();
-    this.clearPreviewFeature();
-    delete this.previewFeatures;
-    delete this.previewFeature;
+    this.unsetPreviewRailroads();
+    this.unsetStateRailroads();
 
-    this.previewPolylines = this.statePolylines;
-    this.previewMarker = this.stateMarker;
-    this.clearPreviewFeatures();
-    this.clearPreviewFeature();
-
-    delete this.statePolylines;
-    delete this.stateMarker;
+    this.unsetPreviewStations();
+    this.unsetStateStations();
   }
 
   enableSearchState(line) {
@@ -195,269 +197,25 @@ class App {
   }
 
   setSearchStateStation(station) {
-    if (this.state === STATE_SELECTING_START)
+    if (this.state === States.SELECTING_START)
       $('.state-start').text(station);
-    else if (this.state === STATE_SELECTING_END)
+    else if (this.state === States.SELECTING_END)
       $('.state-end').text(station);
   }
   // #endregion
-
-  // #region Search railroads
-  onSearchInput(e) {
-    const input = e.target.value.trim();
-    if (input === '') {
-      this.state = STATE_IDLE;
-      return;
-    }
-
-    this.state = STATE_SELECTING_RAILROAD;
-    this.displayRailroadResults(input);
-  }
-
-  onRailroadMouseEnter(e) {
-    const $target = $(e.target);
-    const type = $target.data('type');
-
-    if (type === 'line') {
-      const hash = parseInt($target.data('hash'));
-      const features = this.JRP.getRailroadFeatures(hash);
-      
-      this.previewFeatures = features;
-    }
-
-    this.displayPreviewFeatures();
-  }
-
-  onRailroadMouseLeave(e) {
-    this.clearPreviewFeatures();
-  }
-
-  onRailroadClick(e) {
-    const $target = $(e.target).closest('.search-item');
-    const type = $target.data('type');
-    const hash = parseInt($target.data('hash'));
-
-    this.state = STATE_SELECTING_START;
-
-    this.stateRailroadType = type;
-    this.stateRailroadHash = hash;
-    this.statePolylines = this.previewPolylines;
-    delete this.previewFeatures;
-    delete this.previewPolylines;
-
-    this.enableSearchState($target.find('.name-primary').text());
-    this.displayStationResults(type, hash);
-  }
-
-  //
-
-  displayRailroadResults(keyword) {
-    $('.search-result').empty();
-
-    const result = this.JRP.searchRailroads(keyword);
-
-    result.forEach(railroad => {
-      let $li;
-
-      if (railroad.type === 'line') {
-        $li = fragments.searchItem(railroad.line, railroad.company);
-        $li.data('hash', railroad.hash);
-      }
-
-      $li.data('type', railroad.type);
-
-      $('.search-result').append($li);
-    });
-
-    $('.search-result .search-item')
-      .on('mouseenter', this.onRailroadMouseEnter.bind(this))
-      .on('mouseleave', this.onRailroadMouseLeave.bind(this))
-      .on('click', this.onRailroadClick.bind(this));
-  }
-
-  clearPreviewFeatures() {
-    if (this.previewPolylines) {
-      for (let i = 0 ; i < this.previewPolylines.length ; i++) {
-        this.previewPolylines[i].setMap(null);
-        delete this.previewPolylines[i];
-      }
-
-      this.previewPolylines = [];
-    }
-  }
-
-  displayPreviewFeatures() {
-    this.clearPreviewFeatures();
-
-    const previewPolylines = this.previewFeatures.map(f =>
-      new google.maps.Polyline({
-        path: f.geometry.coordinates.map(([ lng, lat ]) => ({ lat, lng })),
-        strokeColor: '#FF0000',
-        strokeWeight: 1,
-        map: this.map,
-      })
-    );
-
-    this.previewPolylines = previewPolylines;
-  }
-  // #endregion
-
-  // #region Select stations
-  onStationMouseEnter(e) {
-    const $target = $(e.target);
-    const hash = parseInt($target.data('hash'));
-    const feature = this.JRP.getStationFeature(hash);
-
-    this.setSearchStateStation($target.find('.name-primary').text());
-
-    this.previewFeature = feature;
-    this.displayPreviewFeature();
-  }
-
-  onStationMouseLeave(e) {
-    this.clearPreviewFeature();
-  }
-
-  onStationClick(e) {
-    const $target = $(e.target).closest('.search-item');
-    const hash = parseInt($target.data('hash'));
-
-    if (this.state === STATE_SELECTING_START) {
-      this.state = STATE_SELECTING_END;
-
-      this.stateStartHash = hash;
-      this.stateMarker = this.previewMarker;
-
-      delete this.previewFeature;
-      delete this.previewMarker;
-    }
-    else if (this.state === STATE_SELECTING_END) {
-      const type = this.stateRailroadType;
-      const railroadHash = this.stateRailroadHash;
-      const start = this.stateStartHash, end = hash;
-      this.addPlotItem(type, railroadHash, start, end);
-
-      this.resetSearchState();
-    }
-  }
-
-  //
-
-  displayStationResults(type, hash) {
-    $('.search-result').empty();
-
-    let result = [];
-
-    if (type === 'line')
-      result = this.JRP.getStationsFromLine(hash);
-
-    result.forEach(station => {
-      const $li = fragments.searchItem(station.name, station.id);
-      $li.data('hash', station.hash);
-
-      $('.search-result').append($li);
-    });    
-
-    $('.search-result .search-item')
-      .on('mouseenter', this.onStationMouseEnter.bind(this))
-      .on('mouseleave', this.onStationMouseLeave.bind(this))
-      .on('click', this.onStationClick.bind(this));
-  }
-
-  clearPreviewFeature() {
-    if (this.previewMarker) {
-      this.previewMarker.setMap(null);
-      delete this.previewMarker;
-    }
-  }
-
-  displayPreviewFeature() {
-    this.clearPreviewFeature();
-
-    const [ lng, lat ] = this.previewFeature.geometry.coordinates;
-    const previewMarker = new google.maps.Marker({
-      position: { lat, lng },
-      label: this.state === STATE_SELECTING_START ? '始' : '終',
-      map: this.map,
-    });
-
-    this.previewMarker = previewMarker;
-  }
-  // #endregion
-
-  // #region Plots
-  onPlotDelete(e) {
-
-  }
-
-  onPlotChangeColor(e) {
-
-  }
-
-  onPlotChangeWidth(e) {
-
-  }
-
-  //
-
-  addPlotItem(type, railroadHash, startHash, endHash, color = '#000000', width = 1) {
-    const route = this.JRP.getRoute(type, railroadHash, startHash, endHash);
-
-    if (route === false) {
-      alert('Unable to find a route');
-      return;
-    }
-
-    const railroadFeatures = this.JRP.getRailroadFeatures(railroadHash);
-    const lineName = railroadFeatures[0].properties.lineName;
-    const startName = this.JRP.getStationFeature(startHash).properties.stationName;
-    const endName = this.JRP.getStationFeature(endHash).properties.stationName;
-
-    const plotIndex = this.plots.length;
-    const plot = {
-      lineString: route,
-      properties: {
-        type: type,
-        lineName: lineName,
-        lineHash: railroadHash,
-        startName: startName,
-        startHash: startHash,
-        endName: endName,
-        endHash: endHash,
-        color: color,
-        width: width,
-      },
-      polyline: new google.maps.Polyline({
-        path: route.map(([ lng, lat ]) => ({ lat, lng })),
-        strokeColor: color,
-        strokeWidth: width,
-        map: this.map,
-      }),
-    };
-
-    this.plots.push(plot);
-
-    const $plotItem = fragments.plotItem(
-      lineName, `${startName} → ${endName}`,
-      color, width
-    );
-
-    $plotItem.data('index', plotIndex);
-    $plotItem.find('.action-delete').on('click', this.onPlotDelete.bind(this));
-    $plotItem.find('.action-color').on('click', this.onPlotChangeColor.bind(this));
-    $plotItem.find('.action-width').on('click', this.onPlotChangeWidth.bind(this));
-
-    $('.plot-list').append($plotItem);
-
-    return plotIndex;
-  }
-
-  // #endregion
 }
 
+require('./app.railroads')(App);
+require('./app.stations')(App);
+require('./app.plots')(App);
+
 //==============================================================================
+
+require('../../scss/app.scss');
 
 const app = new App();
 app.start()
   .then(() => { })
   .catch(err => { console.error(err); });
+
+window.app = app;
