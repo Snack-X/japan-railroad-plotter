@@ -1,7 +1,8 @@
 const LZString = require('lz-string');
 const topojson = require('topojson-client');
-const { hash32 } = require('../common/utils');
 
+const dataAliases = require('./aliases');
+const dataSeries = require('./series');
 const findRoute = require('./findRoute');
 const utils = require('./utils');
 
@@ -13,15 +14,39 @@ const TYPE_ID = {
 
 const JRP2_BYTES_PER_OBJECT = 18;
 
+function queryMatches(queries, fields) {
+  for (const query of queries) {
+    let hit = false;
+    let conditions = query.match(/((?:^|[+\-])[^+\-]+)/g);
+    
+    for (const cond of conditions) {
+      const clean = cond.replace(/^[+\-]/, '');
+      let includes = false;
+      for (const field of fields)
+        includes = includes || field.includes(clean);
+
+      if (cond[0] === '+') hit = hit && includes;
+      else if (cond[0] === '-') hit = hit && !includes;
+      else hit = hit || includes;
+    }
+
+    if (hit) return true;
+  }
+
+  return false;
+}
+
 class JRPlotter {
   constructor(topoRailroad, topoStation) {
     this.railroads = topojson.feature(topoRailroad, topoRailroad.objects.railroads);
     this.stations = topojson.feature(topoStation, topoStation.objects.stations);
 
     this.railroadHashes = new Map();
+    this.seriesHashes = new Map();
     this.stationHashes = new Map();
 
     this.mapLineStation = new Map();
+    this.mapSeriesStation = new Map();
 
     // Calculate hashes & fill helper maps
     for (let i = 0 ; i < this.railroads.features.length ; i++) {
@@ -66,6 +91,29 @@ class JRPlotter {
         name: stationName,
       });
     }
+
+    for (let i = 0 ; i < dataSeries.length ; i++) {
+      const series = dataSeries[i];
+      const hash = utils.hash32(`${series.type}\xff${series.name}`);
+
+      this.seriesHashes.set(hash, {
+        index: i,
+        type: series.type,
+        name: series.name,
+      });
+
+      this.mapSeriesStation.set(
+        hash, series.stops.map(stationHash => {
+          const station = this.stationHashes.get(stationHash);
+          return {
+            index: station.index,
+            hash: stationHash,
+            id: station.id,
+            name: station.name,
+          };
+        })
+      );
+    }
   }
 
   getRailroadFeatures(hash) {
@@ -78,14 +126,52 @@ class JRPlotter {
     return features;
   }
 
+  getSeriesFeatures(hash) {
+    hash = parseInt(hash);
+
+    const info = this.seriesHashes.get(hash);
+    if (!info) return false;
+
+    const series = dataSeries[info.index];
+    const features = series.routes.map(
+      ([ line, start, end ]) => {
+        return { geometry: {
+          type: 'LineString',
+          coordinates: line !== null ?
+            this.getRoute('line', line, start, end) :
+            [ this.getStationFeature(start).geometry.coordinates,
+              this.getStationFeature(end).geometry.coordinates ],
+        } };
+      }
+    );
+    // const features = series.routes.map(
+    //   ([ line, start, end ]) => ({
+    //     geometry: {
+    //       type: 'LineString',
+    //       coordinates: line !== null ?
+    //         this.getRoute('line', line, start, end) :
+    //         [ this.getStationFeature(start).geometry.coordinates,
+    //           this.getStationFeature(end).geometry.coordinates ],
+    //     },
+    //   })
+    // );
+    return features;
+  }
+
   searchRailroads(keyword) {
     const hits = [];
 
+    // Populate aliases
+    const aliases = Object.keys(dataAliases).filter(w => w.includes(keyword));
+    const keywords = [ keyword ]
+      .concat(aliases.map(w => dataAliases[w]))
+      .filter((w, idx, self) => self.indexOf(w) === idx);
+      
     // Find from features
-    const featureHits = this.railroads.features.filter(f => (
-      f.properties.lineName.includes(keyword) ||
-      f.properties.company.includes(keyword)
-    ));
+    const featureHits = this.railroads.features.filter(f => {
+      const { lineName, company } = f.properties;
+      return queryMatches(keywords, [ lineName, company ]);
+    });
 
     const featureHashes = {};
     featureHits.forEach(f => {
@@ -104,14 +190,29 @@ class JRPlotter {
       }
     });
 
-    // Find from aliases
-
     // Find from series
+    const seriesHits = dataSeries.filter(s => {
+      return queryMatches(keywords, [ s.type, s.name ]);
+    });
+
+    seriesHits.forEach(s => {
+      const key = `${s.type}\xff${s.name}`;
+      const hash = utils.hash32(key);
+
+      hits.push({
+        type: 'series',
+        hash: hash,
+        seriesType: s.type,
+        name: s.name,
+        features: this.getSeriesFeatures(hash),
+      });
+    });
 
     hits.sort((a, b) => (
       (TYPE_PRIORITY[a.type] - TYPE_PRIORITY[b.type]) ||
       (a.company && b.company && a.company.localeCompare(b.company)) ||
-      a.line.localeCompare(b.line)
+      (a.line && b.line && a.line.localeCompare(b.line)) ||
+      (a.name && b.name && a.name.localeCompare(b.name))
     ));
 
     return hits;
@@ -127,6 +228,15 @@ class JRPlotter {
     return stations;
   }
 
+  getStationsFromSeries(hash) {
+    hash = parseInt(hash);
+
+    const stations = this.mapSeriesStation.get(hash);
+    if (!stations) return false;
+
+    return stations;
+  }
+
   getStationFeature(hash) {
     hash = parseInt(hash);
 
@@ -138,11 +248,13 @@ class JRPlotter {
   }
 
   getRoute(type, railroadHash, startHash, endHash) {
-    let lineStrings;
-
-    if (type === 'line') {
-      lineStrings = this.getRailroadFeatures(railroadHash).map(f => f.geometry.coordinates);
-    }
+    let features;
+    if (type === 'line')
+      features = this.getRailroadFeatures(railroadHash);
+    else if (type === 'series')
+      features = this.getSeriesFeatures(railroadHash);
+    
+    const lineStrings = features.map(f => f.geometry.coordinates);
 
     const start = this.getStationFeature(startHash),
           end = this.getStationFeature(endHash);
@@ -164,9 +276,9 @@ class JRPlotter {
 
     const objects = parsed.map(object => ({
       type: 'line',
-      lineHash: hash32(`${object.company}\xff${object.lineName}`),
-      startHash: hash32(object.start),
-      endHash: hash32(object.end),
+      lineHash: utils.hash32(`${object.company}\xff${object.lineName}`),
+      startHash: utils.hash32(object.start),
+      endHash: utils.hash32(object.end),
       color: object.color,
       width: object.width,
     }));

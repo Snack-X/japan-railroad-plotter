@@ -1,5 +1,5 @@
-const JRPlotter = require('./src/common/JRPlotter');
-const findRoute = require('./src/common/findRoute');
+const JRPlotter = require('../src/js/common/JRPlotter');
+const findRoute = require('../src/js/common/findRoute');
 const topoRailroad = require('../dist/data/railroad.json');
 const topoStation = require('../dist/data/station.json');
 const JRP = new JRPlotter(topoRailroad, topoStation);
@@ -34,9 +34,9 @@ function test3(railroadHash, startHash, middleHash, endHash) {
   findRoute(lineStrings, startCoord, endCoord);
 }
 
-// console.log(JRP.searchRailroads(''));
-// console.log(JRP.getStationsFromLine());
-// process.exit(0);
+// console.log(JRP.searchRailroads('東北線'));
+console.log(JRP.getStationsFromLine(910822321));
+process.exit(0);
 
 // 東日本旅客鉄道 - 中央線 / 下諏訪 - 辰野 - 塩尻
 test3(3325678932, 2111621619, 193061657, 2144342683);

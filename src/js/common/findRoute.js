@@ -72,6 +72,8 @@ module.exports = function (lineStrings, startCoord, endCoord) {
     intersections[lidx] = {};
   }
 
+  // console.log(lines, intersections);
+
   const linesCount = lines.length;
 
   // 시작과 끝이 어디에 있는지 찾기
@@ -122,8 +124,8 @@ module.exports = function (lineStrings, startCoord, endCoord) {
     const lineString = [].concat(...candidate.map(route => {
       let [ lidx, start, end ] = route;
       return (start < end) ?
-        lines[route[0]].slice(start, end) :
-        lines[route[0]].slice(end, start).reverse();
+        lines[route[0]].slice(start, end + 1) :
+        lines[route[0]].slice(end, start + 1).reverse();
     }));
 
     return {

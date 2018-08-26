@@ -48,8 +48,16 @@ module.exports = function (App) {
       return;
     }
 
-    const railroadFeatures = this.JRP.getRailroadFeatures(railroadHash);
-    const lineName = railroadFeatures[0].properties.lineName;
+    let lineName;
+    if (type === 'line') {
+      const railroadFeatures = this.JRP.getRailroadFeatures(railroadHash);
+      lineName = railroadFeatures[0].properties.lineName;
+    }
+    else if (type === 'series') {
+      const series = this.JRP.seriesHashes.get(railroadHash);
+      lineName = series.name;
+    }
+    
     const startName = this.JRP.getStationFeature(startHash).properties.stationName;
     const endName = this.JRP.getStationFeature(endHash).properties.stationName;
 

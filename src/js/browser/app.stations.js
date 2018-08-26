@@ -47,6 +47,8 @@ module.exports = function (App) {
 
     if (type === 'line')
       result = this.JRP.getStationsFromLine(hash);
+    else if (type === 'series')
+      result = this.JRP.getStationsFromSeries(hash);
 
     result.forEach(station => {
       const $li = fragments.searchItem(station.name, station.id);

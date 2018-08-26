@@ -19,12 +19,13 @@ module.exports = function (App) {
   App.prototype.eventRailroadMouseEnter = function (e) {
     const $target = $(e.target);
     const type = $target.data('type');
+    const hash = parseInt($target.data('hash'));
 
     let features;
-    if (type === 'line') {
-      const hash = parseInt($target.data('hash'));
+    if (type === 'line')
       features = this.JRP.getRailroadFeatures(hash);
-    }
+    else if (type === 'series')
+      features = this.JRP.getSeriesFeatures(hash);
 
     this.setPreviewRailroads(features);
   };
@@ -57,6 +58,10 @@ module.exports = function (App) {
 
       if (railroad.type === 'line') {
         $li = fragments.searchItem(railroad.line, railroad.company);
+        $li.data('hash', railroad.hash);
+      }
+      else if (railroad.type === 'series') {
+        $li = fragments.searchItem(railroad.name, railroad.seriesType);
         $li.data('hash', railroad.hash);
       }
 
