@@ -1,5 +1,11 @@
 # Japan Railroad Plotter Changelog
 
+## v2.0.0 (2018-08-xx)
+
+* 내부 구조 개선
+* 더 짧은 신규 JRP 데이터 포맷
+* Google Polyline 내보내기에 이중 백슬래시 기능 추가
+
 ## v1.3.1 (2018-06-14)
 
 * 역 데이터 업데이트 (revision 4)

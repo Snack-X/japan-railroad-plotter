@@ -10,6 +10,7 @@
     "build:dev": "NODE_ENV=development webpack --mode development"
   },
   "dependencies": {
+    "dayjs": "^1.7.5",
     "file-saver": "^1.3.8",
     "lz-string": "^1.4.4",
     "mapshaper": "^0.4.91",

@@ -102,49 +102,20 @@ class App {
     $('.search-input input').on('input', this.eventSearchInput.bind(this));
     $('.state-cancel').on('click', this.resetSearchState.bind(this));
 
-    // Modal controls
-    $('.button-show-modal-import-jrp').on('click', () => {
-      $('.modal-import-jrp').addClass('active');
-      $('.modal-import-jrp textarea').value = '';
-      $('.modal-import-jrp textarea').focus();
-    });
-
-    $('.button-show-modal-export-jrp').on('click', () => {
-      // const plots = JSON.stringify(JRP.plots.map(p => p.properties));
-      // const output = LZString.compressToBase64(plots);
-
-      $('.modal-export-jrp').addClass('active');
-      $('.modal-export-jrp textarea').value = output;
-      $('.modal-export-jrp textarea').select();
-    });
-
-    $('.button-show-modal-export-polyline').on('click', () =>  {
-      // const data = [];
-    
-      // JRP.plots.forEach(plot => {
-      //   data.push(
-      //     `${plot.properties.company} - ${plot.properties.lineName} - ` +
-      //     `${plot.properties.startName} -> ${plot.properties.endName}`
-      //   );
-      //   data.push(google.maps.geometry.encoding.encodePath(plot.object.getPath()));
-      // });
-    
-      // const output = data.join("\n");
-    
-      $('.modal-export-polyline').addClass('active');
-      $('.modal-export-polyline textarea').value = output;
-      $('.modal-export-polyline textarea').select();
-    });
-
-    $('.button-show-modal-export-kml').on('click', () => {
-    });
-
     // Modals
     $('.modal .modal-close').on('click', e => {
       $(e.target).closest('.modal').removeClass('active');
     });
 
-    // $('.modal-action-import-jrp').addEventListener('click', importPlotsFromBase64);
+    $('.button-show-modal-import-jrp').on('click', this.showModalImportJrp.bind(this));
+    $('.modal-action-import-jrp').on('click', this.eventModalImportJrp.bind(this));
+
+    $('.button-show-modal-export-jrp').on('click', this.showModalExportJrp.bind(this));
+
+    $('.button-show-modal-export-polyline').on('click', this.showModalExportPolyline.bind(this));
+    $('.modal-export-polyline input').on('input', this.showModalExportPolyline.bind(this));
+
+    $('.button-show-modal-export-kml').on('click', this.showModalExportKml.bind(this));
   }
   // #endregion
 
@@ -208,6 +179,7 @@ class App {
 require('./app.railroads')(App);
 require('./app.stations')(App);
 require('./app.plots')(App);
+require('./app.modals')(App);
 
 //==============================================================================
 

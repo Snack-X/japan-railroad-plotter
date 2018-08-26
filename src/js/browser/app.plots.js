@@ -1,5 +1,4 @@
 const $ = require('umbrellajs');
-const States = require('./app.states');
 const fragments = require('./fragments');
 
 module.exports = function (App) {
@@ -26,11 +25,12 @@ module.exports = function (App) {
     const $target = $(e.target).closest('.plot-item');
     const index = parseInt($target.data('index'), 10);
 
-    const newWidth = parseFloat(prompt('새로운 너비 (숫자)').trim());
+    const newWidth = parseInt(prompt('새로운 너비 (숫자)').trim());
     if (!newWidth) return;
-    
-    if (!Number.isNaN(newWidth))
-      this.changePlotWidth(index, newWidth);
+    if (Number.isNaN(newWidth)) return;
+    if (newWidth < 0 || newWidth > 0xffff) return;
+
+    this.changePlotWidth(index, newWidth);
   };
 
   App.prototype.getPlotItem = function (index) {
@@ -67,12 +67,7 @@ module.exports = function (App) {
         color: color,
         width: width,
       },
-      polyline: new google.maps.Polyline({
-        path: route.map(([ lng, lat ]) => ({ lat, lng })),
-        strokeColor: color,
-        strokeWeight: width,
-        map: this.map,
-      }),
+      polyline: this.newGooglePolyline(route, color, width),
     };
 
     this.plots.push(plot);

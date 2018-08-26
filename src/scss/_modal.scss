@@ -21,6 +21,17 @@
   margin-left: -320px;
   width: 640px;
   background: rgba(0, 0, 0, 0.5);
+
+  label {
+    float: right;
+    padding: .1rem 0;
+    color: white;
+    border: 1px solid transparent;
+  }
+
+  label + label {
+    margin-right: 1rem;
+  }
 }
 
 .modal-title {

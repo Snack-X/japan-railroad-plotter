@@ -1,9 +1,17 @@
+const LZString = require('lz-string');
 const topojson = require('topojson-client');
+const { hash32 } = require('../common/utils');
 
 const findRoute = require('./findRoute');
 const utils = require('./utils');
 
 const TYPE_PRIORITY = { line: 1, series: 2, route: 3 };
+const TYPE_ID = {
+  line: 1, series: 2, route: 3,
+  '1': 'line', '2': 'series', '3': 'routes',
+};
+
+const JRP2_BYTES_PER_OBJECT = 18;
 
 class JRPlotter {
   constructor(topoRailroad, topoStation) {
@@ -148,6 +156,84 @@ class JRPlotter {
     // Calculate
     const route = findRoute(lineStrings, startCoord, endCoord);
     return route;
+  }
+
+  decodeJRP1(data) {
+    const decompressed = LZString.decompressFromBase64(data);
+    const parsed = JSON.parse(decompressed);
+
+    const objects = parsed.map(object => ({
+      type: 'line',
+      lineHash: hash32(`${object.company}\xff${object.lineName}`),
+      startHash: hash32(object.start),
+      endHash: hash32(object.end),
+      color: object.color,
+      width: object.width,
+    }));
+
+    return objects;
+  }
+
+  decodeJRP2(data, decoder) {
+    if (!data.startsWith('JRP2-')) return false;
+
+    const decoded = decoder(data.slice(5));
+    if (decoded.length % JRP2_BYTES_PER_OBJECT !== 0) return false;
+
+    const buf = new ArrayBuffer(decoded.length);
+    const view = new DataView(buf);
+    for (let i = 0 ; i < decoded.length ; i++)
+      view.setUint8(i, decoded.charCodeAt(i));
+
+    const objects = [];
+    for (let i = 0 ; i < decoded.length ; i += JRP2_BYTES_PER_OBJECT) {
+      const object = {
+        type: TYPE_ID[view.getUint8(i + 0)],
+        lineHash: view.getUint32(i + 1),
+        startHash: view.getUint32(i + 5),
+        endHash: view.getUint32(i + 9),
+        color: '#' + [
+          view.getUint8(i + 13),
+          view.getUint8(i + 14),
+          view.getUint8(i + 15),
+        ].map(v => v.toString(16).padStart(2, '0')).join(''),
+        width: view.getUint16(i + 16),
+      };
+      objects.push(object);
+    }
+
+    return objects;
+  }
+
+  encodeJRP2(objects, encoder) {
+    const buf = new ArrayBuffer(objects.length * JRP2_BYTES_PER_OBJECT);
+    const view = new DataView(buf);
+
+    for (let i = 0 ; i < objects.length ; i++) {
+      const object = objects[i];
+      const offset = i * JRP2_BYTES_PER_OBJECT;
+
+      view.setUint8(offset + 0, TYPE_ID[object.type]);
+      view.setUint32(offset + 1, object.lineHash);
+      view.setUint32(offset + 5, object.startHash);
+      view.setUint32(offset + 9, object.endHash);
+
+      const regex = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/;
+      const match = object.color.match(regex);
+      if (!match) return;
+      view.setUint8(offset + 13, parseInt(match[1], 16));
+      view.setUint8(offset + 14, parseInt(match[2], 16));
+      view.setUint8(offset + 15, parseInt(match[3], 16));
+
+      view.setUint16(offset + 16, object.width);
+    }
+
+    let binary = '';
+    for (let i = 0 ; i < buf.byteLength ; i++)
+      binary += String.fromCharCode(view.getUint8(i));
+
+    const encoded = encoder(binary);
+    return 'JRP2-' + encoded;
   }
 }
 
