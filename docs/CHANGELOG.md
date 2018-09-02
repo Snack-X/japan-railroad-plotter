@@ -1,5 +1,7 @@
 # Japan Railroad Plotter Changelog
 
+[**운행 계통 / 특급열차 / 쾌속열차 목록**](SERIES.md)
+
 ## v2.0.1 (2018-09-02)
 
 * 운행 계통 / 특급열차 / 쾌속열차 데이터 추가
