@@ -192,7 +192,7 @@ class JRPlotter {
 
     // Find from series
     const seriesHits = dataSeries.filter(s => {
-      return queryMatches(keywords, [ s.type, s.name ]);
+      return queryMatches(keywords, [ s.type, s.name, s.company ]);
     });
 
     seriesHits.forEach(s => {
