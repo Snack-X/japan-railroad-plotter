@@ -17,10 +17,10 @@ const JRP2_BYTES_PER_OBJECT = 18;
 function queryMatches(queries, fields) {
   for (const query of queries) {
     let hit = false;
-    let conditions = query.match(/((?:^|[+\-])[^+\-]+)/g);
+    let conditions = query.match(/((?:^|[+\-\|])[^+\-\|]+)/g);
     
     for (const cond of conditions) {
-      const clean = cond.replace(/^[+\-]/, '');
+      const clean = cond.replace(/^[+\-\|]/, '');
       let includes = false;
       for (const field of fields)
         includes = includes || field.includes(clean);
