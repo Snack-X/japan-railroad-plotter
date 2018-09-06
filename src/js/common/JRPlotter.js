@@ -1,15 +1,17 @@
 const LZString = require('lz-string');
 const topojson = require('topojson-client');
 
-const dataAliases = require('./aliases');
-const dataSeries = require('./series');
+const dataAliases = require('./data.aliases');
+const dataSeries = require('./data.series');
+const dataHidden = require('./data.hidden');
+
 const findRoute = require('./findRoute');
 const utils = require('./utils');
 
-const TYPE_PRIORITY = { line: 1, series: 2, route: 3 };
+const TYPE_PRIORITY = { line: 1, series: 2 };
 const TYPE_ID = {
-  line: 1, series: 2, route: 3,
-  '1': 'line', '2': 'series', '3': 'routes',
+  line: 1, series: 2,
+  '1': 'line', '2': 'series',
 };
 
 const JRP2_BYTES_PER_OBJECT = 18;
@@ -43,10 +45,12 @@ class JRPlotter {
 
     this.railroadHashes = new Map();
     this.seriesHashes = new Map();
+    this.hiddenHashes = new Map();
     this.stationHashes = new Map();
 
     this.mapLineStation = new Map();
     this.mapSeriesStation = new Map();
+    this.mapHiddenStation = new Map();
 
     // Calculate hashes & fill helper maps
     for (let i = 0 ; i < this.railroads.features.length ; i++) {
@@ -114,6 +118,29 @@ class JRPlotter {
         })
       );
     }
+
+    for (let i = 0 ; i < dataHidden.length ; i++) {
+      const hidden = dataHidden[i];
+      const hash = utils.hash32(`${hidden.type}\xff${hidden.name}`);
+
+      this.hiddenHashes.set(hash, {
+        index: i,
+        type: hidden.type,
+        name: hidden.name,
+      });
+
+      this.mapHiddenStation.set(
+        hash, hidden.stations.map(stationHash => {
+          const station = this.stationHashes.get(stationHash);
+          return {
+            index: station.index,
+            hash: stationHash,
+            id: station.id,
+            name: station.name,
+          };
+        })
+      );
+    }
   }
 
   getRailroadFeatures(hash) {
@@ -138,24 +165,27 @@ class JRPlotter {
         return { geometry: {
           type: 'LineString',
           coordinates: line !== null ?
-            this.getRoute('line', line, start, end) :
+            this.getRoute(line, start, end) :
             [ this.getStationFeature(start).geometry.coordinates,
               this.getStationFeature(end).geometry.coordinates ],
         } };
       }
     );
-    // const features = series.routes.map(
-    //   ([ line, start, end ]) => ({
-    //     geometry: {
-    //       type: 'LineString',
-    //       coordinates: line !== null ?
-    //         this.getRoute('line', line, start, end) :
-    //         [ this.getStationFeature(start).geometry.coordinates,
-    //           this.getStationFeature(end).geometry.coordinates ],
-    //     },
-    //   })
-    // );
+    
     return features;
+  }
+
+  getHiddenFeatures(hash) {
+    hash = parseInt(hash);
+
+    const info = this.hiddenHashes.get(hash);
+    if (!info) return false;
+
+    const hidden = dataHidden[info.index];
+    return [ { geometry: {
+      type: 'LineString',
+      coordinates: hidden.coordinates,
+    } } ];
   }
 
   searchRailroads(keyword) {
@@ -247,12 +277,19 @@ class JRPlotter {
     return feature;
   }
 
-  getRoute(type, railroadHash, startHash, endHash) {
+  getRoute(railroadHash, startHash, endHash) {
     let features;
-    if (type === 'line')
-      features = this.getRailroadFeatures(railroadHash);
-    else if (type === 'series')
+    
+    features = this.getRailroadFeatures(railroadHash);
+    
+    if (!features)
+      features = this.getHiddenFeatures(railroadHash);
+
+    if (!features)
       features = this.getSeriesFeatures(railroadHash);
+      
+    if (!features)
+      return null;
     
     const lineStrings = features.map(f => f.geometry.coordinates);
 

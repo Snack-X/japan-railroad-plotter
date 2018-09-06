@@ -41,7 +41,7 @@ module.exports = function (App) {
                                 type, railroadHash, startHash, endHash,
                                 color = '#000000', width = 1
                               ) {
-    const route = this.JRP.getRoute(type, railroadHash, startHash, endHash);
+    const route = this.JRP.getRoute(railroadHash, startHash, endHash);
 
     if (route === false) {
       alert('Unable to find a route');
