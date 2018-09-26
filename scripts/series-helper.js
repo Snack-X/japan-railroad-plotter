@@ -8,7 +8,7 @@ const JRP = new JRPlotter(topoRailroad, topoStation);
 const routes = [
 ];
 
-const targets = ''.split(/[\s駅\-・]+/);
+const targets = ''.split(/[\s駅\-・（）]+/).filter(s => s !== '');
 
 const stations = [].concat(...routes.map(r => JRP.getStationsFromLine(r[0])));
 for (const target of targets) {
