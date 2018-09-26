@@ -1,4 +1,4 @@
-const dayjs = require('dayjs');
+const { format } = require('date-fns');
 
 class KMLBuilder {
   constructor() {
@@ -48,7 +48,7 @@ class KMLBuilder {
 
   build() {
     const output = [];
-    const now = dayjs().format('YYYY-MM-DD HH:mm:ss');
+    const now = format(new Date(), 'YYYY-MM-DD HH:mm:ss');
 
     output.push(`<?xml version="1.0" encoding="UTF-8"?>`);
     output.push(`<kml xmlns="http://www.opengis.net/kml/2.2">`);

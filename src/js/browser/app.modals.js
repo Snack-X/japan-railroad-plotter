@@ -1,5 +1,5 @@
 const $ = require('umbrellajs');
-const dayjs = require('dayjs');
+const { format } = require('date-fns');
 const FileSaver = require('file-saver');
 
 const KMLBuilder = require('../common/KMLBuilder');
@@ -95,7 +95,7 @@ module.exports = function (App) {
     });
     
     const output = builder.build();
-    const now = dayjs().format('YYYY.MM.DD.HH.mm.ss');
+    const now = format(new Date(), 'YYYY.MM.DD.HH.mm.ss');
 
     const blob = new Blob([ output ], { type: KMLBuilder.MIME });
     const filename = `Japan Railroad Plotter (${now}).kml`;
