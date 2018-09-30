@@ -13,6 +13,11 @@ module.exports = {
     filename: 'js/[name].js?hash=[contenthash:6]',
     publicPath: '/dist/',
   },
+  optimization: {
+    splitChunks: {
+      chunks: 'all',
+    },
+  },
   module: {
     rules: [
       {
